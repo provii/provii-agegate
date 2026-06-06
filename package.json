@@ -1,0 +1,118 @@
+{
+  "name": "provii-agegate",
+  "version": "0.1.2",
+  "private": true,
+  "author": "Tom Maelstrom <tom@maelstrom.au>",
+  "description": "Zero-Knowledge Age-Verification browser library",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/provii/provii-agegate.git"
+  },
+  "homepage": "https://provii.app",
+  "bugs": {
+    "url": "https://github.com/provii/provii-agegate/issues"
+  },
+  "sideEffects": [
+    "./dist/agegate.browser.js",
+    "./dist/agegate.esm.js",
+    "./dist/modes/autoload.js",
+    "./src/modes/autoload.ts"
+  ],
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "browser": "dist/agegate.browser.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "browser": "./dist/agegate.browser.js",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./preview": {
+      "types": "./dist/preview.d.ts",
+      "import": "./dist/preview.js"
+    }
+  },
+  "scripts": {
+    "build:ts": "tsc -p tsconfig.build.json",
+    "build:cjs": "tsc -p tsconfig.build.json --module commonjs --outDir dist-cjs && cp dist-cjs/index.js dist/index.cjs && cp dist-cjs/*.d.ts dist/",
+    "build:browser": "esbuild dist/index.js --bundle --format=iife --target=es2022 --minify --define:process.env.NODE_ENV=\\\"production\\\" --outfile=dist/agegate.browser.js",
+    "build": "npm run build:ts && npm run build:cjs && npm run build:browser && npm run build:esm",
+    "build:demo": "npm run build && cp dist/agegate.browser.js demo/",
+    "test": "jest --runInBand",
+    "test:unit": "jest --runInBand --testPathIgnorePatterns='property.spec.ts'",
+    "test:ci": "jest --runInBand --testPathIgnorePatterns='property|integration|extra|comprehensive|AgeGate\\.spec\\.ts'",
+    "test:property": "jest --runInBand --testPathPatterns='property.spec.ts'",
+    "test:all": "jest --runInBand",
+    "test:strict": "jest --runInBand --coverage --bail",
+    "mutation": "stryker run",
+    "lint": "eslint .",
+    "sri": "openssl dgst -sha384 -binary dist/agegate.browser.js | openssl base64 -A | awk '{print \"sha384-\" $0}' > dist/agegate.browser.js.sri && echo \"SRI hash generated:\" && cat dist/agegate.browser.js.sri",
+    "security:licenses": "npx license-checker --production --failOn 'GPL;AGPL;LGPL;SSPL' --summary",
+    "build:esm": "esbuild dist/index.js --bundle --format=esm --target=es2022 --minify --define:process.env.NODE_ENV=\\\"production\\\" --outfile=dist/agegate.esm.js"
+  },
+  "keywords": [
+    "age-verification",
+    "zkp",
+    "bulletproofs",
+    "typescript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "dompurify": "^3.4.5",
+    "qr-code-styling": "1.9.2",
+    "qrcode": "^1.5.4",
+    "xstate": "^5.31.1"
+  },
+  "overrides": {
+    "qs": "6.15.2",
+    "@stryker-mutator/core": {
+      "ajv": "8.18.0",
+      "minimatch": "10.2.4"
+    },
+    "eslint-plugin-sonarjs": {
+      "minimatch": "10.2.4"
+    },
+    "fast-uri": "3.1.2"
+  },
+  "devDependencies": {
+    "@cyclonedx/cyclonedx-npm": "4.2.1",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.60.0",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/jest-runner": "^9.6.1",
+    "@stryker-mutator/typescript-checker": "^9.6.1",
+    "@types/dompurify": "^3.2.0",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.9.1",
+    "@types/qrcode": "1.5.6",
+    "@types/react": "^19.2.15",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.34.0",
+    "esbuild": "^0.28.0",
+    "eslint": "^10.4.0",
+    "eslint-plugin-jest": "^29.15.2",
+    "eslint-plugin-security": "^4.0.0",
+    "eslint-plugin-sonarjs": "^4.0.3",
+    "express": "^5.2.1",
+    "fast-check": "^4.8.0",
+    "globals": "^17.6.0",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
+    "jest-location-mock": "3.0.0",
+    "terser": "^5.48.0",
+    "ts-jest": "^29.4.11",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "whatwg-fetch": "^3.6.20"
+  }
+}

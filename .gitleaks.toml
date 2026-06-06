@@ -1,0 +1,29 @@
+# Gitleaks configuration for provii-agegate
+# https://github.com/gitleaks/gitleaks
+
+title = "provii-agegate gitleaks config"
+
+[extend]
+# Use default gitleaks rules
+useDefault = true
+
+[allowlist]
+# Test files contain fake public keys for testing
+paths = [
+    '''tests/.*\.spec\.ts$''',
+    '''e2e/.*\.ts$''',
+    # Stryker mutation testing sandbox is a build artefact.
+    # The directory is gitignored but Stryker creates it at runtime,
+    # so any scanner that walks the working tree must skip it.
+    '''\.stryker-tmp/''',
+]
+
+# Allow test public keys with the pk_test_ prefix
+regexes = [
+    '''pk_test_[0-9a-f]{64}''',
+]
+
+# Specific known false positives
+stopwords = [
+    "pk_test_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+]

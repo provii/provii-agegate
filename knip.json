@@ -1,0 +1,48 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/index.ts!",
+    "src/preview.ts!",
+    "scripts/**/*.ts",
+    "tests/**/*.{ts,cjs}",
+    "e2e/**/*.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": [
+    "src/types/age-gate.ts"
+  ],
+  "ignoreDependencies": [
+    "@stryker-mutator/api",
+    "@stryker-mutator/typescript-checker",
+    "@types/dompurify",
+    "jest-location-mock",
+    "terser",
+    "ts-node",
+    "tsx",
+    "@jest/globals"
+  ],
+  "ignoreBinaries": [
+    "prettier",
+    "license-checker",
+    "openssl",
+    "awk",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "0BSD",
+    "CC0-1.0",
+    "CC-BY-3.0",
+    "CC-BY-4.0",
+    "LGPL-3.0-only",
+    "Unlicense",
+    "Python-2.0",
+    "BlueOak-1.0.0",
+    "AGPL",
+    "LGPL",
+    "SSPL"
+  ],
+  "rules": {
+    "unresolved": "off"
+  }
+}

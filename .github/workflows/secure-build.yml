@@ -1,0 +1,1135 @@
+name: Secure Build & Release (SLSA 3)
+
+# SLSA Level 3 supply chain security for provii-agegate npm package
+# - Hermetic builds with locked dependencies
+# - Cryptographic signing of all artifacts
+# - Non-falsifiable provenance generation
+# - SRI hash generation for browser bundle
+# - SBOM generation for transparency
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release version (e.g., v0.1.1)'
+        required: false
+        type: string
+      dry_run:
+        description: 'Test publish: route R2 sidecar uploads to <repo>/test/<sha>/, skip latest/ overwrite, and skip GitHub release + CDN binary publish'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/v') }}
+
+env:
+  NODE_VERSION: 22
+  WRANGLER_VERSION: '4.92.0'
+
+jobs:
+  # ============================================================================
+  # Pre-build: Security and dependency checks
+  # ============================================================================
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Verify package-lock.json exists (hermetic build requirement)
+        run: |
+          if [[ ! -f package-lock.json ]]; then
+            echo "::error::package-lock.json missing - required for reproducible builds"
+            exit 1
+          fi
+          echo "package-lock.json present"
+
+      - name: Install dependencies (locked)
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level high
+
+      - name: Run linter
+        run: npm run lint
+
+  # ============================================================================
+  # Build and test
+  # ============================================================================
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: security-audit
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies (hermetic)
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test:ci
+
+
+      - name: Build all artifacts
+        run: npm run build
+
+      - name: Verify build outputs
+        run: |
+          # Check ESM
+          if [[ ! -f dist/index.js ]]; then
+            echo "::error::ESM build failed: dist/index.js not found"
+            exit 1
+          fi
+
+          # Check CJS
+          if [[ ! -f dist/index.cjs ]]; then
+            echo "::error::CJS build failed: dist/index.cjs not found"
+            exit 1
+          fi
+
+          # Check browser bundle
+          if [[ ! -f dist/agegate.browser.js ]]; then
+            echo "::error::Browser build failed: dist/agegate.browser.js not found"
+            exit 1
+          fi
+
+          # Check types
+          if [[ ! -f dist/index.d.ts ]]; then
+            echo "::error::TypeScript declarations not found"
+            exit 1
+          fi
+
+          echo "All build artifacts present"
+          ls -lh dist/
+
+      - name: Generate SRI hash for browser bundle
+        run: |
+          # Generate SHA-384 SRI hash (standard for CDN integrity)
+          SRI_HASH=$(openssl dgst -sha384 -binary dist/agegate.browser.js | openssl base64 -A)
+          echo "sha384-${SRI_HASH}" > dist/agegate.browser.js.sri
+
+          echo "SRI hash generated:"
+          cat dist/agegate.browser.js.sri
+
+      - name: Generate checksums for all artifacts
+        run: |
+          cd dist
+          sha256sum *.js *.cjs *.d.ts > CHECKSUMS.txt
+          cat CHECKSUMS.txt
+
+      - name: Generate SBOM (SPDX, kept for back-compat with existing release assets)
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          upload-release-assets: false
+          path: .
+          format: spdx-json
+          output-file: dist/provii-agegate.sbom.spdx.json
+
+      - name: Generate CycloneDX SBOM for browser bundle
+        # Tooling choice: @cyclonedx/cyclonedx-npm (per-ecosystem) over syft.
+        # The browser IIFE inlines its full npm dep tree (qrcode, xstate,
+        # qr-code-styling, dompurify and their transitives), so a Node-native
+        # SBOM tool reads package.json + package-lock.json directly and
+        # produces CycloneDX 1.6 with accurate package-url (purl) values.
+        # syft would also work but emits weaker purl coverage for npm.
+        #
+        # Output filename matches the artefact: agegate.browser.js.cdx.json
+        # so the R2 layout has <artefact>, <artefact>.sig, <artefact>.intoto.jsonl,
+        # <artefact>.cdx.json, <artefact>.cdx.json.sig as siblings.
+        run: |
+          set -euo pipefail
+          # Version resolved from package-lock.json (installed as devDependency).
+          npx @cyclonedx/cyclonedx-npm \
+            --spec-version 1.6 \
+            --output-format JSON \
+            --output-file dist/agegate.browser.js.cdx.json \
+            --omit dev \
+            --package-lock-only
+          # Sanity: emitted file is non-empty, parseable JSON, CycloneDX 1.6,
+          # has at least one component (the inlined deps must be listed).
+          jq -e '.bomFormat == "CycloneDX" and (.specVersion == "1.6") and (.components | length > 0)' \
+            dist/agegate.browser.js.cdx.json > /dev/null
+          echo "CycloneDX components: $(jq '.components | length' dist/agegate.browser.js.cdx.json)"
+          jq '.metadata.component.name, .specVersion' dist/agegate.browser.js.cdx.json
+
+      - name: Create tarball for signing
+        run: |
+          npm pack
+          TARBALL=$(ls provii-agegate-*.tgz)
+          sha256sum "${TARBALL}" > "${TARBALL}.sha256"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: provii-agegate-dist
+          path: |
+            dist/**/*
+            dist/agegate.browser.js.cdx.json
+            provii-agegate-*.tgz
+            provii-agegate-*.tgz.sha256
+          retention-days: 30
+          if-no-files-found: error
+
+  # ============================================================================
+  # Sign artifacts with Sigstore
+  # ============================================================================
+  sign-artifacts:
+    name: Sign Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-and-test
+    # Wave-8: extended to fire on workflow_dispatch so dry_run dispatches
+    # exercise the cosign sign + SLSA attestation + R2 publish path
+    # end-to-end. Pull-request runs still bypass signing.
+    if: |
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))) ||
+      github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: provii-agegate-dist
+
+      - name: Generate artifact hashes for SLSA provenance
+        id: hash
+        run: |
+          # Generate base64-encoded sha256sum output for SLSA provenance.
+          # Subject array MUST cover every artefact a downstream consumer
+          # might verify: the npm tarball (GitHub release asset, used by
+          # the release-body verification recipe) AND the browser bundle
+          # (sidecar at provenance.provii.app, served via
+          # cdn.provii.app). slsa-verifier matches by digest, so
+          # listing both lets a single intoto.jsonl validate either file.
+          set -euo pipefail
+          TARBALL=$(ls provii-agegate-*.tgz)
+          test -f "${TARBALL}"
+          test -f dist/agegate.browser.js
+          # Use basenames (no dist/ prefix) so the subject `name` matches
+          # the filename consumers actually fetch from CDN/release.
+          SUBJECTS_TXT=$(mktemp)
+          (
+            sha256sum "${TARBALL}"
+            cd dist && sha256sum agegate.browser.js
+          ) > "${SUBJECTS_TXT}"
+          echo "Subjects to attest:"
+          cat "${SUBJECTS_TXT}"
+          HASHES=$(base64 -w0 < "${SUBJECTS_TXT}")
+          echo "hashes=${HASHES}" >> "${GITHUB_OUTPUT}"
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          # Wave-8: bumped to v2.5.3 for --new-bundle-format support, which
+          # produces a Sigstore bundle the @sigstore/verify consumer can
+          # parse without a separate cert file. The existing legacy
+          # .cosign-bundle output is kept for the in-repo verify-blob step
+          # below, which still uses the legacy parser.
+          cosign-release: v2.5.3
+
+      - name: Sign npm tarball
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          TARBALL=$(ls provii-agegate-*.tgz)
+
+          cosign sign-blob --yes \
+            --bundle "${TARBALL}.cosign-bundle" \
+            "${TARBALL}"
+
+      - name: Sign browser bundle (legacy .cosign-bundle, kept for compat)
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          cosign sign-blob --yes \
+            --bundle dist/agegate.browser.js.cosign-bundle \
+            dist/agegate.browser.js
+
+      - name: Sign browser bundle (new Sigstore bundle format, .sig)
+        # Wave-8: emits dist/agegate.browser.js.sig in the new bundle format
+        # required by the R2 provenance archive at provenance.provii.app.
+        # This is the file uploaded to R2; the legacy .cosign-bundle stays in
+        # the GitHub release for existing consumers.
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          set -euo pipefail
+          cosign sign-blob --yes \
+            --new-bundle-format \
+            --bundle dist/agegate.browser.js.sig \
+            dist/agegate.browser.js
+          python3 -c "import json,sys; b=json.load(open('dist/agegate.browser.js.sig')); assert b.get('mediaType','').startswith('application/vnd.dev.sigstore.bundle'), b.get('mediaType')"
+
+      - name: Sign CycloneDX SBOM (new Sigstore bundle format)
+        # Phase-3 SBOM addition: cosign-sign the CycloneDX SBOM under the same
+        # OIDC identity as the bundle .sig, producing
+        # dist/agegate.browser.js.cdx.json.sig as a sibling to the SBOM.
+        # cosign verify-blob with the same identity-regexp + issuer that
+        # validates the bundle .sig must also validate this SBOM signature.
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          set -euo pipefail
+          test -f dist/agegate.browser.js.cdx.json
+          cosign sign-blob --yes \
+            --new-bundle-format \
+            --bundle dist/agegate.browser.js.cdx.json.sig \
+            dist/agegate.browser.js.cdx.json
+          python3 -c "import json,sys; b=json.load(open('dist/agegate.browser.js.cdx.json.sig')); assert b.get('mediaType','').startswith('application/vnd.dev.sigstore.bundle'), b.get('mediaType')"
+
+      - name: Verify signatures
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+          GH_REPOSITORY: ${{ github.repository }}
+        run: |
+          TARBALL=$(ls provii-agegate-*.tgz)
+
+          # Verify npm tarball signature
+          cosign verify-blob \
+            --bundle "${TARBALL}.cosign-bundle" \
+            --certificate-identity-regexp="https://github.com/${GH_REPOSITORY}/.*" \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+            "${TARBALL}"
+
+          # Verify browser bundle signature
+          cosign verify-blob \
+            --bundle dist/agegate.browser.js.cosign-bundle \
+            --certificate-identity-regexp="https://github.com/${GH_REPOSITORY}/.*" \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+            dist/agegate.browser.js
+
+          echo "All signatures verified"
+
+      - name: Upload signed artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: provii-agegate-signed
+          path: |
+            provii-agegate-*.tgz
+            provii-agegate-*.tgz.sha256
+            provii-agegate-*.tgz.cosign-bundle
+            dist/agegate.browser.js
+            dist/agegate.browser.js.sri
+            dist/agegate.browser.js.cosign-bundle
+            dist/agegate.browser.js.sig
+            dist/agegate.browser.js.cdx.json
+            dist/agegate.browser.js.cdx.json.sig
+            dist/CHECKSUMS.txt
+            dist/provii-agegate.sbom.spdx.json
+            dist/**/*.js
+            dist/**/*.d.ts
+            dist/**/*.map
+          retention-days: 90
+
+  # ============================================================================
+  # Generate SLSA Provenance
+  #
+  # Uses actions/attest-build-provenance (SHA-pinned) instead of the
+  # slsa-framework reusable workflow. The reusable workflow references its
+  # own internal composite actions at @v2.1.0 tag refs, which the Provii
+  # org-level SHA-pinning policy blocks. GitHub's native attestation action
+  # produces Sigstore-signed in-toto SLSA provenance stored in the GitHub
+  # attestations API, verifiable via `gh attestation verify`.
+  # ============================================================================
+  provenance:
+    name: Generate SLSA Provenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [sign-artifacts]
+    if: |
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))) ||
+      github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: provii-agegate-signed
+          path: signed
+
+      - name: Attest npm tarball
+        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+        with:
+          subject-path: signed/provii-agegate-*.tgz
+
+      - name: Attest browser bundle
+        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+        with:
+          subject-path: signed/dist/agegate.browser.js
+
+      - name: Export attestation bundle for R2 sidecar
+        # Download the attestation bundle from the GitHub attestations API
+        # so the publish-r2-provenance-sidecars job can upload it to R2.
+        # gh attestation download writes <digest>.jsonl to the working dir;
+        # we rename it to the expected sidecar filename.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p provenance-out
+          cd provenance-out
+          gh attestation download ../signed/dist/agegate.browser.js \
+            --repo "${GITHUB_REPOSITORY}" \
+            --predicate-type "https://slsa.dev/provenance/v1"
+          # Rename the digest-based filename to the expected sidecar name
+          JSONL_FILE=$(ls sha256-*.jsonl 2>/dev/null || ls sha256:*.jsonl 2>/dev/null)
+          mv "${JSONL_FILE}" agegate.browser.js.intoto.jsonl
+          cd ..
+          ls -lh provenance-out/
+
+      - name: Upload provenance artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: provii-agegate-provenance
+          path: provenance-out/agegate.browser.js.intoto.jsonl
+          retention-days: 90
+          if-no-files-found: error
+
+  # ============================================================================
+  # Create GitHub Release
+  # ============================================================================
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [sign-artifacts, provenance]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download signed artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: provii-agegate-signed
+          path: release-files
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Read SRI hash
+        id: sri
+        run: |
+          SRI=$(cat release-files/dist/agegate.browser.js.sri)
+          echo "hash=${SRI}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        with:
+          name: provii-agegate ${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            release-files/provii-agegate-*.tgz
+            release-files/provii-agegate-*.tgz.sha256
+            release-files/provii-agegate-*.tgz.cosign-bundle
+            release-files/dist/agegate.browser.js
+            release-files/dist/agegate.browser.js.sri
+            release-files/dist/agegate.browser.js.cosign-bundle
+            release-files/dist/CHECKSUMS.txt
+            release-files/dist/provii-agegate.sbom.spdx.json
+            release-files/dist/agegate.browser.js.cdx.json
+            release-files/dist/agegate.browser.js.cdx.json.sig
+          body: |
+            ## provii-agegate ${{ steps.version.outputs.VERSION }}
+
+            Browser SDK for Provii's zero-knowledge age verification flow.
+
+            ### Security & Supply Chain
+
+            This release includes:
+            - SLSA Level 3 Provenance
+            - Sigstore keyless signatures
+            - SHA256 checksums for all artifacts
+            - Reproducible builds from locked dependencies
+            - SRI hash for browser bundle
+            - SBOM (Software Bill of Materials)
+
+            ### Installation
+
+            **npm:**
+            ```bash
+            npm install provii-agegate@${{ steps.version.outputs.VERSION }}
+            ```
+
+            **CDN (browser):**
+            ```html
+            <script
+              src="https://cdn.provii.app/sdk/provii-agegate/${{ steps.version.outputs.VERSION }}/agegate.browser.js"
+              integrity="${{ steps.sri.outputs.hash }}"
+              crossorigin="anonymous"></script>
+            ```
+
+            ### Verification
+
+            **Verify npm package:**
+            ```bash
+            # Download artifacts
+            wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/provii-agegate-*.tgz
+            wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/provii-agegate-*.tgz.sha256
+            wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/provii-agegate-*.tgz.cosign-bundle
+
+            # Verify checksum
+            sha256sum -c provii-agegate-*.tgz.sha256
+
+            # Verify signature
+            cosign verify-blob \
+              --bundle provii-agegate-*.tgz.cosign-bundle \
+              --certificate-identity-regexp="https://github.com/${{ github.repository }}/.*" \
+              --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+              provii-agegate-*.tgz
+            ```
+
+            **Verify browser bundle:**
+            ```bash
+            # Download
+            wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/agegate.browser.js
+            wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/agegate.browser.js.sri
+
+            # Verify SRI hash
+            openssl dgst -sha384 -binary agegate.browser.js | openssl base64 -A
+            # Compare with: ${{ steps.sri.outputs.hash }}
+            ```
+
+            ### Documentation
+
+            - [Integration Guide](https://github.com/${{ github.repository }}/blob/main/README.md)
+            - [API Documentation](https://docs.provii.app/sdk/provii-agegate)
+
+            ### What's Changed
+
+            See the [full changelog](https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.VERSION }}...main) for details.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Wave-8: the legacy S3-compatible R2 step that lived here was removed
+      # because the bucket-scoped access keys returned HTTP 401 on every PUT.
+      # Sidecar uploads to provenance.provii.app now happen in the
+      # dedicated publish-r2-provenance-sidecars job below using
+      # wrangler@latest --remote with CLOUDFLARE_API_TOKEN, mirroring
+      # provii-verifier/publish-openapi.yml.
+
+  # ============================================================================
+  # Publish to CDN (R2) on tags only
+  # ============================================================================
+  cdn-publish:
+    name: Publish to CDN
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [sign-artifacts, provenance]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
+    env:
+      R2_BUCKET: cdn
+      SDK_PREFIX: sdk/provii-agegate
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - name: Download signed artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: provii-agegate-signed
+          path: signed-artifacts
+
+      - name: Extract version info
+        id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          MAJOR=$(echo "${VERSION}" | cut -d. -f1)
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "major=${MAJOR}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+          echo "Version: ${VERSION}, Major: ${MAJOR}"
+
+      - name: Verify downloaded artifacts
+        run: |
+          ls -lh signed-artifacts/dist/agegate.browser.js
+          ls -lh signed-artifacts/dist/agegate.browser.js.sri
+          echo "SRI hash:"
+          cat signed-artifacts/dist/agegate.browser.js.sri
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install wrangler
+        run: npm install -g wrangler@${{ env.WRANGLER_VERSION }} --ignore-scripts
+
+      - name: Upload exact version to R2
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # IIFE bundle (autoload script tag path)
+          wrangler r2 object put "${R2_BUCKET}/${SDK_PREFIX}/v${VERSION}/agegate.browser.js" \
+            --file signed-artifacts/dist/agegate.browser.js \
+            --content-type "application/javascript; charset=utf-8" \
+            --cache-control "public, max-age=31536000, immutable" \
+            --remote
+
+          wrangler r2 object put "${R2_BUCKET}/${SDK_PREFIX}/v${VERSION}/agegate.browser.js.sri" \
+            --file signed-artifacts/dist/agegate.browser.js.sri \
+            --content-type "text/plain; charset=utf-8" \
+            --cache-control "public, max-age=31536000, immutable" \
+            --remote
+
+          # ESM tree (programmatic import path). The whole dist/ minus the
+          # IIFE/CJS files goes up so a browser can resolve relative imports
+          # like "./agegate/AgeGate.js" via dynamic import.
+          cd signed-artifacts/dist
+          while IFS= read -r f; do
+            rel="${f#./}"
+            ct="application/javascript; charset=utf-8"
+            case "$rel" in
+              *.d.ts) ct="application/typescript; charset=utf-8" ;;
+              *.map)  ct="application/json; charset=utf-8" ;;
+            esac
+            wrangler r2 object put "${R2_BUCKET}/${SDK_PREFIX}/v${VERSION}/${rel}" \
+              --file "$f" \
+              --content-type "$ct" \
+              --cache-control "public, max-age=31536000, immutable" \
+              --remote
+          done < <(find . -type f \
+            \( -name '*.js' -o -name '*.d.ts' -o -name '*.map' \) \
+            ! -name 'agegate.browser.js' \
+            ! -name 'index.cjs' \
+            -print)
+          cd "$GITHUB_WORKSPACE"
+
+      - name: Upload major alias to R2
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          MAJOR="${{ steps.version.outputs.major }}"
+
+          wrangler r2 object put "${R2_BUCKET}/${SDK_PREFIX}/v${MAJOR}/agegate.browser.js" \
+            --file signed-artifacts/dist/agegate.browser.js \
+            --content-type "application/javascript; charset=utf-8" \
+            --cache-control "public, max-age=3600" \
+            --remote
+
+          wrangler r2 object put "${R2_BUCKET}/${SDK_PREFIX}/v${MAJOR}/agegate.browser.js.sri" \
+            --file signed-artifacts/dist/agegate.browser.js.sri \
+            --content-type "text/plain; charset=utf-8" \
+            --cache-control "public, max-age=3600" \
+            --remote
+
+          # ESM tree at the major alias (shorter cache-control)
+          cd signed-artifacts/dist
+          while IFS= read -r f; do
+            rel="${f#./}"
+            ct="application/javascript; charset=utf-8"
+            case "$rel" in
+              *.d.ts) ct="application/typescript; charset=utf-8" ;;
+              *.map)  ct="application/json; charset=utf-8" ;;
+            esac
+            wrangler r2 object put "${R2_BUCKET}/${SDK_PREFIX}/v${MAJOR}/${rel}" \
+              --file "$f" \
+              --content-type "$ct" \
+              --cache-control "public, max-age=3600" \
+              --remote
+          done < <(find . -type f \
+            \( -name '*.js' -o -name '*.d.ts' -o -name '*.map' \) \
+            ! -name 'agegate.browser.js' \
+            ! -name 'index.cjs' \
+            -print)
+          cd "$GITHUB_WORKSPACE"
+
+      - name: Upload latest alias to R2
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          wrangler r2 object put "${R2_BUCKET}/${SDK_PREFIX}/latest/agegate.browser.js" \
+            --file signed-artifacts/dist/agegate.browser.js \
+            --content-type "application/javascript; charset=utf-8" \
+            --cache-control "public, max-age=300" \
+            --remote
+
+          wrangler r2 object put "${R2_BUCKET}/${SDK_PREFIX}/latest/agegate.browser.js.sri" \
+            --file signed-artifacts/dist/agegate.browser.js.sri \
+            --content-type "text/plain; charset=utf-8" \
+            --cache-control "public, max-age=300" \
+            --remote
+
+          # ESM tree at latest (5 minute cache-control)
+          cd signed-artifacts/dist
+          while IFS= read -r f; do
+            rel="${f#./}"
+            ct="application/javascript; charset=utf-8"
+            case "$rel" in
+              *.d.ts) ct="application/typescript; charset=utf-8" ;;
+              *.map)  ct="application/json; charset=utf-8" ;;
+            esac
+            wrangler r2 object put "${R2_BUCKET}/${SDK_PREFIX}/latest/${rel}" \
+              --file "$f" \
+              --content-type "$ct" \
+              --cache-control "public, max-age=300" \
+              --remote
+          done < <(find . -type f \
+            \( -name '*.js' -o -name '*.d.ts' -o -name '*.map' \) \
+            ! -name 'agegate.browser.js' \
+            ! -name 'index.cjs' \
+            -print)
+          cd "$GITHUB_WORKSPACE"
+
+      - name: Update version manifest in R2
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          MAJOR="${{ steps.version.outputs.major }}"
+          SRI_HASH=$(cat signed-artifacts/dist/agegate.browser.js.sri)
+          RELEASED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          CDN_BASE="https://cdn.provii.app"
+
+          # Download existing manifest or start fresh
+          MANIFEST_FILE=$(mktemp)
+          wrangler r2 object get "${R2_BUCKET}/${SDK_PREFIX}/manifest.json" \
+            --file "${MANIFEST_FILE}" --remote 2>/dev/null || echo '{}' > "${MANIFEST_FILE}"
+
+          # Build updated manifest with Node.js for reliable JSON handling
+          node -e "
+            const fs = require('fs');
+            const raw = fs.readFileSync('${MANIFEST_FILE}', 'utf8');
+            let manifest;
+            try { manifest = JSON.parse(raw); } catch { manifest = {}; }
+
+            const version = '${VERSION}';
+            const major = '${MAJOR}';
+            const sriHash = '${SRI_HASH}'.trim();
+            const releasedAt = '${RELEASED_AT}';
+            const cdnBase = '${CDN_BASE}';
+
+            if (!manifest.major_versions) manifest.major_versions = {};
+            if (!manifest.versions) manifest.versions = [];
+
+            manifest.current_version = version;
+
+            manifest.major_versions[major] = {
+              latest: version,
+              sri_hash: sriHash,
+              url: cdnBase + '/sdk/provii-agegate/v' + major + '/agegate.browser.js'
+            };
+
+            const existing = manifest.versions.findIndex(v => v.version === version);
+            if (existing >= 0) manifest.versions.splice(existing, 1);
+            manifest.versions.unshift({
+              version: version,
+              sri_hash: sriHash,
+              released_at: releasedAt
+            });
+
+            // Keep at most 50 version entries
+            if (manifest.versions.length > 50) {
+              manifest.versions = manifest.versions.slice(0, 50);
+            }
+
+            fs.writeFileSync('${MANIFEST_FILE}', JSON.stringify(manifest, null, 2));
+          "
+
+          echo "Updated manifest:"
+          cat "${MANIFEST_FILE}"
+
+          wrangler r2 object put "${R2_BUCKET}/${SDK_PREFIX}/manifest.json" \
+            --file "${MANIFEST_FILE}" \
+            --content-type "application/json; charset=utf-8" \
+            --cache-control "public, max-age=300" \
+            --remote
+
+      - name: Purge Cloudflare cache for alias paths
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        run: |
+          MAJOR="${{ steps.version.outputs.major }}"
+          CDN_BASE="https://cdn.provii.app"
+
+          # Purge alias paths and manifest only (exact versions are immutable)
+          curl -s -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data "{
+              \"files\": [
+                \"${CDN_BASE}/${SDK_PREFIX}/v${MAJOR}/agegate.browser.js\",
+                \"${CDN_BASE}/${SDK_PREFIX}/v${MAJOR}/agegate.browser.js.sri\",
+                \"${CDN_BASE}/${SDK_PREFIX}/latest/agegate.browser.js\",
+                \"${CDN_BASE}/${SDK_PREFIX}/latest/agegate.browser.js.sri\",
+                \"${CDN_BASE}/${SDK_PREFIX}/manifest.json\"
+              ]
+            }" | jq .
+
+      - name: Publish summary
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          MAJOR="${{ steps.version.outputs.major }}"
+          SRI_HASH=$(cat signed-artifacts/dist/agegate.browser.js.sri)
+          CDN_BASE="https://cdn.provii.app"
+
+          {
+            echo "## CDN Publish Complete"
+            echo ""
+            echo "| Path | URL |"
+            echo "|------|-----|"
+            echo "| Exact | \`${CDN_BASE}/${SDK_PREFIX}/v${VERSION}/agegate.browser.js\` |"
+            echo "| Major | \`${CDN_BASE}/${SDK_PREFIX}/v${MAJOR}/agegate.browser.js\` |"
+            echo "| Latest | \`${CDN_BASE}/${SDK_PREFIX}/latest/agegate.browser.js\` |"
+            echo "| Manifest | \`${CDN_BASE}/${SDK_PREFIX}/manifest.json\` |"
+            echo ""
+            echo "**SRI Hash:** \`${SRI_HASH}\`"
+            echo ""
+            echo "**Usage:**"
+            echo '```html'
+            echo "<script"
+            echo "  src=\"${CDN_BASE}/${SDK_PREFIX}/v${MAJOR}/agegate.browser.js\""
+            echo "  integrity=\"${SRI_HASH}\""
+            echo '  crossorigin="anonymous"></script>'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ============================================================================
+  # Publish provenance sidecars to R2 (Wave-8)
+  #
+  # SIDECARS ONLY. The IIFE bundle stays on cdn.provii.app via the
+  # cdn-publish job above; we do NOT republish the .js binary here. Per Tim
+  # 2026-04-23: do not publish to npm, do not change package.json privacy,
+  # do not duplicate the binary on provenance.provii.app.
+  #
+  # Layout in R2 bucket provii-api-specs:
+  #   provii-agegate/<version>/agegate.browser.js.sig          (cosign Sigstore bundle)
+  #   provii-agegate/<version>/agegate.browser.js.intoto.jsonl (SLSA in-toto JSONL)
+  #   provii-agegate/latest/agegate.browser.js.sig             (mirror, tag triggers only)
+  #   provii-agegate/latest/agegate.browser.js.intoto.jsonl    (mirror, tag triggers only)
+  #   provii-agegate/test/<sha>/...                            (workflow_dispatch dry_run)
+  #
+  # Verification gate: on tag triggers, fetch the freshly-published CDN
+  # bundle and assert its SHA-256 matches the cosign bundle's subject digest.
+  # This catches the case where the bytes uploaded to R2 differ from the
+  # bytes signed by cosign (e.g. minifier non-determinism, runner cache
+  # corruption). On workflow_dispatch dry_run, the CDN bundle for this
+  # version does not exist yet, so we fall back to a self-consistency check
+  # against the locally-signed file. Both paths fail-safe on mismatch.
+  #
+  # Mirrors provii-verifier/.github/workflows/publish-openapi.yml:162-209.
+  # ============================================================================
+  publish-r2-provenance-sidecars:
+    name: Publish provenance sidecars to R2
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [sign-artifacts, provenance]
+    # On tag-trigger, also wait for cdn-publish so the CDN URL exists when
+    # we verify against it. On workflow_dispatch dispatch, cdn-publish is
+    # skipped (tag-only), and we run on the dispatch branch with dry_run.
+    if: |
+      always() &&
+      needs.sign-artifacts.result == 'success' &&
+      needs.provenance.result == 'success' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        startsWith(github.ref, 'refs/tags/v')
+      )
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      SERVICE: provii-agegate
+      R2_BUCKET: provii-api-specs
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - name: Resolve version + path prefix + dry_run
+        id: ctx
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            DRY_RUN="${INPUT_DRY_RUN}"
+            VERSION="dispatch-${COMMIT_SHA}"
+          else
+            DRY_RUN="false"
+            TAG="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG#v}"
+          fi
+          if [ "${DRY_RUN}" = "true" ]; then
+            BASE_PREFIX="${SERVICE}/test/${COMMIT_SHA}"
+            PROMOTE_LATEST="false"
+          else
+            BASE_PREFIX="${SERVICE}/${VERSION}"
+            PROMOTE_LATEST="true"
+          fi
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "base_prefix=${BASE_PREFIX}" >> "${GITHUB_OUTPUT}"
+          echo "promote_latest=${PROMOTE_LATEST}" >> "${GITHUB_OUTPUT}"
+          echo "dry_run=${DRY_RUN}" >> "${GITHUB_OUTPUT}"
+
+      - name: Download signed artefacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: provii-agegate-signed
+          path: signed
+
+      - name: Verify .sig file exists
+        run: |
+          set -euo pipefail
+          test -f signed/dist/agegate.browser.js.sig
+          test -f signed/dist/agegate.browser.js
+          test -f signed/dist/agegate.browser.js.cdx.json
+          test -f signed/dist/agegate.browser.js.cdx.json.sig
+          ls -lh signed/dist/agegate.browser.js \
+                 signed/dist/agegate.browser.js.sig \
+                 signed/dist/agegate.browser.js.cdx.json \
+                 signed/dist/agegate.browser.js.cdx.json.sig
+
+      - name: Download provenance attestation from provenance job
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: provii-agegate-provenance
+          path: provenance-dl
+
+      - name: Copy attestation into signed artefacts tree
+        run: |
+          set -euo pipefail
+          cp provenance-dl/agegate.browser.js.intoto.jsonl \
+             signed/dist/agegate.browser.js.intoto.jsonl
+          ls -lh signed/dist/agegate.browser.js.intoto.jsonl
+
+      - name: Verify cosign bundle subject digest matches signed bytes
+        # Fail-safe self-check: the cosign bundle was produced inline in the
+        # sign-artifacts job, so the subject digest must equal the local file
+        # SHA-256. If it does not, something corrupted the artefact between
+        # signing and download , abort the publish.
+        run: |
+          set -euo pipefail
+          LOCAL_DIGEST=$(sha256sum signed/dist/agegate.browser.js | awk '{print $1}')
+          # The new-bundle-format Sigstore bundle stores the subject as
+          # messageSignature.messageDigest.digest (base64) with algorithm
+          # SHA2_256.
+          BUNDLE_DIGEST_B64=$(jq -r '.messageSignature.messageDigest.digest' signed/dist/agegate.browser.js.sig)
+          BUNDLE_DIGEST=$(echo "${BUNDLE_DIGEST_B64}" | base64 -d | xxd -p -c 256 | tr -d '\n')
+          if [ "${LOCAL_DIGEST}" != "${BUNDLE_DIGEST}" ]; then
+            echo "::error::cosign bundle subject digest ${BUNDLE_DIGEST} does not match local file digest ${LOCAL_DIGEST}"
+            exit 1
+          fi
+          echo "Self-check OK: cosign bundle subject digest equals signed bytes (${LOCAL_DIGEST})"
+
+      - name: Verify CDN bundle SHA-256 matches cosign subject (tag triggers only)
+        # On tag triggers, cdn-publish has already pushed the binary to
+        # cdn.provii.app. Fetch it and confirm the bytes the public CDN
+        # serves match the cosign signature. This catches the case where the
+        # bytes uploaded to the CDN diverge from the bytes signed by CI.
+        # On workflow_dispatch dry_run, this step is skipped (no CDN entry
+        # exists for this commit yet); the self-check above is enough.
+        #
+        # Cloudflare propagation from R2 to a cold edge node routinely takes
+        # 1-3 minutes. The previous `curl --retry 6 --retry-delay 10` budget
+        # (~70s) lost the race on cold-edge runs and silently skipped the
+        # sidecar upload. We poll for up to 10 minutes with a 15s gap, only
+        # accepting an HTTP 200 with a non-empty body before computing the
+        # digest. Any other transport error or unexpected status is fatal.
+        if: ${{ steps.ctx.outputs.dry_run != 'true' && startsWith(github.ref, 'refs/tags/v') }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.ctx.outputs.version }}"
+          CDN_URL="https://cdn.provii.app/sdk/provii-agegate/v${VERSION}/agegate.browser.js"
+          MAX_ATTEMPTS=40        # 40 * 15s = 10 minutes total budget
+          ATTEMPT_DELAY=15
+          echo "Polling ${CDN_URL} (up to $((MAX_ATTEMPTS * ATTEMPT_DELAY))s)"
+          attempt=1
+          while [ "${attempt}" -le "${MAX_ATTEMPTS}" ]; do
+            http_status=$(curl -sS -o cdn-bundle.js -w '%{http_code}' "${CDN_URL}" || echo "000")
+            if [ "${http_status}" = "200" ] && [ -s cdn-bundle.js ]; then
+              echo "Bundle visible at edge after ${attempt} attempt(s) (HTTP 200, $(stat -c%s cdn-bundle.js 2>/dev/null || stat -f%z cdn-bundle.js) bytes)"
+              break
+            fi
+            if [ "${attempt}" -eq "${MAX_ATTEMPTS}" ]; then
+              echo "::error::CDN bundle still unreachable after $((MAX_ATTEMPTS * ATTEMPT_DELAY))s (last HTTP ${http_status})."
+              echo "::error::Either R2 -> Cloudflare propagation is unusually slow or the cdn-publish job did not actually upload v${VERSION}."
+              exit 1
+            fi
+            echo "Attempt ${attempt}/${MAX_ATTEMPTS}: HTTP ${http_status}, retrying in ${ATTEMPT_DELAY}s"
+            sleep "${ATTEMPT_DELAY}"
+            attempt=$((attempt + 1))
+          done
+          CDN_DIGEST=$(sha256sum cdn-bundle.js | awk '{print $1}')
+          BUNDLE_DIGEST_B64=$(jq -r '.messageSignature.messageDigest.digest' signed/dist/agegate.browser.js.sig)
+          BUNDLE_DIGEST=$(echo "${BUNDLE_DIGEST_B64}" | base64 -d | xxd -p -c 256 | tr -d '\n')
+          if [ "${CDN_DIGEST}" != "${BUNDLE_DIGEST}" ]; then
+            echo "::error::CDN bundle SHA-256 ${CDN_DIGEST} does not match cosign subject digest ${BUNDLE_DIGEST}"
+            echo "::error::The bytes serving from cdn.provii.app are NOT the bytes CI signed."
+            exit 1
+          fi
+          echo "CDN bundle SHA-256 matches cosign subject digest (${CDN_DIGEST})"
+
+      - name: Install Wrangler
+        run: npm install -g wrangler@${{ env.WRANGLER_VERSION }} --ignore-scripts
+
+      - name: Upload sidecars to R2 (wrangler)
+        # SIDECARS ONLY. We do NOT upload agegate.browser.js to
+        # provii-api-specs because the binary lives on cdn.provii.app
+        # and Tim explicitly blocked duplicating it on the provenance host.
+        # Phase-3 SBOM addition: also publish <artefact>.cdx.json (CycloneDX
+        # 1.6) and <artefact>.cdx.json.sig (cosign Sigstore bundle) so the
+        # full supply-chain answer "where did this come from + what is in it"
+        # is verifiable from the provenance host alone.
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BASE_PREFIX: ${{ steps.ctx.outputs.base_prefix }}
+        run: |
+          set -euo pipefail
+          wrangler r2 object put \
+            "${R2_BUCKET}/${BASE_PREFIX}/agegate.browser.js.sig" \
+            --remote \
+            --file=signed/dist/agegate.browser.js.sig \
+            --content-type=application/vnd.dev.sigstore.bundle+json
+          wrangler r2 object put \
+            "${R2_BUCKET}/${BASE_PREFIX}/agegate.browser.js.intoto.jsonl" \
+            --remote \
+            --file=signed/dist/agegate.browser.js.intoto.jsonl \
+            --content-type=application/vnd.in-toto+json
+          wrangler r2 object put \
+            "${R2_BUCKET}/${BASE_PREFIX}/agegate.browser.js.cdx.json" \
+            --remote \
+            --file=signed/dist/agegate.browser.js.cdx.json \
+            --content-type=application/vnd.cyclonedx+json
+          wrangler r2 object put \
+            "${R2_BUCKET}/${BASE_PREFIX}/agegate.browser.js.cdx.json.sig" \
+            --remote \
+            --file=signed/dist/agegate.browser.js.cdx.json.sig \
+            --content-type=application/vnd.dev.sigstore.bundle+json
+
+      - name: Promote to <service>/latest/ (tag triggers only)
+        if: ${{ steps.ctx.outputs.promote_latest == 'true' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          wrangler r2 object put \
+            "${R2_BUCKET}/${SERVICE}/latest/agegate.browser.js.sig" \
+            --remote \
+            --file=signed/dist/agegate.browser.js.sig \
+            --content-type=application/vnd.dev.sigstore.bundle+json
+          wrangler r2 object put \
+            "${R2_BUCKET}/${SERVICE}/latest/agegate.browser.js.intoto.jsonl" \
+            --remote \
+            --file=signed/dist/agegate.browser.js.intoto.jsonl \
+            --content-type=application/vnd.in-toto+json
+          wrangler r2 object put \
+            "${R2_BUCKET}/${SERVICE}/latest/agegate.browser.js.cdx.json" \
+            --remote \
+            --file=signed/dist/agegate.browser.js.cdx.json \
+            --content-type=application/vnd.cyclonedx+json
+          wrangler r2 object put \
+            "${R2_BUCKET}/${SERVICE}/latest/agegate.browser.js.cdx.json.sig" \
+            --remote \
+            --file=signed/dist/agegate.browser.js.cdx.json.sig \
+            --content-type=application/vnd.dev.sigstore.bundle+json
+
+      - name: Upload CI artefacts (debug)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: r2-provenance-sidecars-${{ github.sha }}
+          path: signed/dist/
+          retention-days: 14
