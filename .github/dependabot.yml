@@ -1,0 +1,30 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    # Dependabot waits the configured cooldown before opening a PR for
+    # newly-released versions, catching the released-then-yanked window
+    # that has caught actions/setup-node, slsa-framework, and others.
+    cooldown:
+      # Zizmor's dependabot-cooldown audit warns when default-days < 7,
+      # to give yanked-release windows enough time to surface.
+      default-days: 7
+    groups:
+      actions-minor-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]

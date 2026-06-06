@@ -1,0 +1,103 @@
+# Mutation Testing - provii-agegate
+# Stryker mutation testing with jest runner.
+# Weekly full incremental run + PR-scoped runs on source changes.
+# All actions SHA-pinned.
+
+name: Mutation Testing
+
+on:
+  schedule:
+    - cron: '0 5 * * 1' # Monday 05:00 UTC
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**/*.ts'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  mutants:
+    name: Stryker Mutation Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: github.actor != 'dependabot[bot]'
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Stryker
+        run: npm install --no-save @stryker-mutator/core @stryker-mutator/jest-runner @stryker-mutator/typescript-checker
+
+      - name: Restore Stryker incremental cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: reports/stryker-incremental.json
+          key: stryker-incremental-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            stryker-incremental-${{ github.ref_name }}-
+            stryker-incremental-main-
+
+      - name: Run Stryker (PR scope)
+        if: github.event_name == 'pull_request'
+        run: npx stryker run --since origin/main
+
+      # Scoped to the same high-value logic modules as ci.yml to complete
+      # within the 60 min timeout on a cold cache. The full src/** scope
+      # exceeds 60 min even with incremental caching. Excluding:
+      #   - src/i18n/locales/** (static translation data, no branching logic)
+      #   - src/types/** (type declarations with minimal runtime code)
+      #   - src/styles/** (theme configuration, no branching logic)
+      #   - src/ui/** (DOM rendering glue, covered better by Playwright E2E)
+      #   - src/api/** (already excluded in stryker.conf.mjs)
+      #   - src/index.ts, src/preview.ts (re-export barrels with no logic)
+      - name: Run Stryker (weekly scoped incremental)
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          npx stryker run \
+            --incremental \
+            --mutate 'src/core/**/*.ts' \
+            --mutate 'src/utils/**/*.ts' \
+            --mutate 'src/errors/**/*.ts' \
+            --mutate 'src/modes/**/*.ts' \
+            --mutate 'src/agegate/**/*.ts' \
+            --mutate 'src/i18n/index.ts' \
+            --mutate '!src/api/**/*'
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mutation-report
+          path: reports/mutation.html
+          retention-days: 14
+          if-no-files-found: ignore

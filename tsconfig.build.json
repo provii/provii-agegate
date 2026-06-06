@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    /* emit build artefact */
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    "skipLibCheck": true,
+    /* JSX configuration */
+    "jsx": "react-jsx",
+    /* library bundle is ES module but may omit .js in imports */
+    "module": "ES2022",
+    "moduleResolution": "node",
+    /* node10 resolution is deprecated in TS6 but kept so the bundle can omit
+       .js in imports; silence until a deliberate resolution migration */
+    "ignoreDeprecations": "6.0",
+    "types": ["node", "react"]
+  },
+  "exclude": [
+    "e2e/**"
+  ],
+  "include": ["src/**/*"]
+}

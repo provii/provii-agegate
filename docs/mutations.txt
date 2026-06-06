@@ -1,0 +1,2894 @@
+# provii
+
+Mutation testing  [] 100% (elapsed: ~9m, remaining: n/a) 326/326 Mutants tested (55 survived, 36 timed out)
+
+All tests
+  age‑gate‑machine.spec.ts
+    ✓ AgeGateMachine (deterministic) Nominal & error transitions runs the complete happy-path to "verified" [line 60] (killed 1)
+    ✓ AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on fetch failure [line 83] (killed 2)
+    ✓ AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll throws [line 83] (killed 1)
+    ✓ AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll ok:false [line 83] (killed 5)
+    ✓ AgeGateMachine (deterministic) Back-off & polling loop backs off 1.5× each retry [line 108] (killed 1)
+    ~ AgeGateMachine (deterministic) Back-off & polling loop clamps the interval to 30 000 ms [line 133] (covered 14)
+  AgeGate.edge.spec.ts
+    ~ AgeGate – graceful when mount element is missing resolves without error [line 66] (covered 61)
+    ~ AgeGate.init idempotency returns the same promise on repeated calls [line 90] (covered 146)
+    ~ Verification timeout guard still not verified after simulated 1 s [line 102] (covered 65)
+    ✓ AgeGate.init rejection on poll error rejects with the underlying error [line 122] (killed 3)
+  AgeGate.spec.ts
+    ✓ AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered" [line 86] (killed 5)
+    ✓ AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed" [line 97] (killed 2)
+    ✓ AgeGate – Unit tests redirect action invokes caller-supplied redirect fn [line 110] (killed 4)
+    ~ AgeGate – Unit tests redirect action falls back to window.location.href [line 121] (covered 63)
+    ~ AgeGate – Integration tests renders QR canvas & caption on desktop [line 203] (covered 54)
+    ~ AgeGate – Integration tests renders deep-link anchor on mobile [line 213] (covered 54)
+    ~ AgeGate – Integration tests redirects to contentUrl after verification [line 222] (covered 54)
+    ~ AgeGate – Integration tests propagates init errors [line 235] (covered 54)
+    ~ AgeGate – Real implementation smoke test constructs without throwing [line 259] (covered 57)
+  AgeGateConfig.spec.ts
+    ✓ contentUrl normalisation normalises trailing slash [line 36] (killed 5)
+    ✓ contentUrl normalisation normalises multiple trailing /// [line 36] (killed 1)
+    ~ contentUrl normalisation normalises missing leading slash [line 36] (covered 48)
+    ✓ contentUrl normalisation normalises too many leading slashes [line 36] (killed 2)
+    ✓ pollInterval constraints throws when < 500 ms [line 45] (killed 3)
+    ✓ pollInterval constraints accepts ≥ 500 ms [line 49] (killed 1)
+    ✓ statusUrl logic derives from challengeUrl when omitted [line 58] (killed 4)
+    ✓ statusUrl logic honours explicit override – even with {sid} in hostname [line 63] (killed 3)
+  api.schema.spec.ts
+    ~ ChallengeSchema – positive accepts a fully valid payload [line 34] (covered 4)
+    ✘ StatusSchema – positive accepts { ok: true } [line 43] (covered 0)
+    ✘ StatusSchema – positive accepts { ok: false, reason } [line 47] (covered 0)
+    ~ ChallengeSchema – negative boundary/anchor checks rejects invalid sid (uuid) [line 64] (covered 4)
+    ✓ ChallengeSchema – negative boundary/anchor checks rejects invalid nonce (length) [line 64] (killed 1)
+    ~ ChallengeSchema – negative boundary/anchor checks rejects invalid sig_site empty [line 64] (covered 4)
+    ✓ ChallengeSchema – negative boundary/anchor checks origin_hash 64‑hex anchor rejects with a leading char [line 69] (killed 2)
+    ~ ChallengeSchema – negative boundary/anchor checks origin_hash 64‑hex anchor rejects with a trailing char [line 75] (covered 4)
+    ✓ ChallengeSchema – negative boundary/anchor checks exp strictly in the future (millisecond precision) rejects when exp === now [line 89] (killed 2)
+    ~ ChallengeSchema – negative boundary/anchor checks exp strictly in the future (millisecond precision) accepts when exp > now [line 93] (covered 4)
+    ✘ StatusSchema – negative rejects non‑boolean ok [line 104] (covered 0)
+  device.spec.ts
+    ✓ device helpers detects iPhone user‑agent [line 29] (killed 1)
+    ✘ device helpers returns false for a desktop user‑agent [line 35] (covered 0)
+    ✓ device helpers detects touch capability via maxTouchPoints [line 43] (killed 5)
+    ✓ device helpers detects touch capability via ontouchstart [line 50] (killed 1)
+    ✓ device helpers returns false when no touch capability is present (boundary case) [line 57] (killed 2)
+  machineServices.spec.ts
+    ✓ machineServices.fetchChallenge POSTs JSON with same-origin credentials [line 57] (killed 4)
+    ✓ machineServices.fetchChallenge returns raw JSON when **only** sid fails validation [line 78] (killed 5)
+    ✓ machineServices.fetchChallenge throws when multiple fields are invalid [line 95] (killed 4)
+    ✓ machineServices.fetchChallenge throws when ctx.cfg is missing [line 103] (killed 1)
+    ✓ machineServices.pollStatus rejects when called before a challenge exists [line 116] (killed 1)
+    ✓ machineServices.pollStatus builds URL: replacement, encoding & trailing-slash trim [line 120] (killed 10)
+    ✓ machineServices.pollStatus substitutes {sid} placeholder when present [line 146] (killed 2)
+    ✓ machineServices.pollStatus throws when ctx.cfg is absent [line 176] (killed 1)
+    ✓ machineActions helpers (renderChallenge, redirect) renders deep-link <a> on mobile with encoded params [line 207] (killed 4)
+    ✓ machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails [line 217] (killed 2)
+    ✓ machineActions helpers (renderChallenge, redirect) redirect() assigns window.location.href without JSDOM navigation [line 225] (killed 3)
+  Poller.spec.ts
+    ✓ Poller (deterministic) invokes callback until it returns true, then stops [line 14] (killed 14)
+    ✓ Poller (deterministic) stops and logs when the callback throws [line 32] (killed 1)
+
+[NoCoverage] BlockStatement
+src/agegate/AgeGate.ts:58:18
+-             } else {
+-               console.error('AgeGate: redirect called without cfg');
+-             }
++             } else {}
+
+[NoCoverage] StringLiteral
+src/agegate/AgeGate.ts:59:27
+-               console.error('AgeGate: redirect called without cfg');
++               console.error("");
+
+[NoCoverage] ConditionalExpression
+src/agegate/AgeGateConfig.ts:66:7
+-     if (u.origin !== pageOrigin) {
++     if (true) {
+
+[NoCoverage] ConditionalExpression
+src/agegate/AgeGateConfig.ts:66:7
+-     if (u.origin !== pageOrigin) {
++     if (false) {
+
+[NoCoverage] EqualityOperator
+src/agegate/AgeGateConfig.ts:66:7
+-     if (u.origin !== pageOrigin) {
++     if (u.origin === pageOrigin) {
+
+[NoCoverage] BlockStatement
+src/agegate/AgeGateConfig.ts:66:32
+-     if (u.origin !== pageOrigin) {
+-       throw new Error('contentUrl must be same-origin');
+-     }
++     if (u.origin !== pageOrigin) {}
+
+[NoCoverage] StringLiteral
+src/agegate/AgeGateConfig.ts:67:21
+-       throw new Error('contentUrl must be same-origin');
++       throw new Error("");
+
+[NoCoverage] Regex
+src/agegate/AgeGateConfig.ts:70:39
+-     const pathname = u.pathname.replace(/\/+$/u, '');
++     const pathname = u.pathname.replace(/\/+/u, '');
+
+[NoCoverage] Regex
+src/agegate/AgeGateConfig.ts:70:39
+-     const pathname = u.pathname.replace(/\/+$/u, '');
++     const pathname = u.pathname.replace(/\/$/u, '');
+
+[NoCoverage] StringLiteral
+src/agegate/AgeGateConfig.ts:70:48
+-     const pathname = u.pathname.replace(/\/+$/u, '');
++     const pathname = u.pathname.replace(/\/+$/u, "Stryker was here!");
+
+[NoCoverage] StringLiteral
+src/agegate/AgeGateConfig.ts:71:16
+-     absContent = `${u.origin}${pathname}`;
++     absContent = ``;
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:23:25
+-       const CH_REQUIRED = 'challengeUrl required – challengeUrl is required';
++       const CH_REQUIRED = "";
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 27 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:24:25
+-       const CT_REQUIRED = 'contentUrl required – contentUrl is required';
++       const CT_REQUIRED = "";
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 27 more tests!
+
+
+[Survived] ConditionalExpression
+src/agegate/AgeGateConfig.ts:25:9
+-       if (!rawChallengeUrl) throw new Error(CH_REQUIRED);
++       if (false) throw new Error(CH_REQUIRED);
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 27 more tests!
+
+
+[Survived] ConditionalExpression
+src/agegate/AgeGateConfig.ts:26:9
+-       if (!rawContentUrl)   throw new Error(CT_REQUIRED);
++       if (false)   throw new Error(CT_REQUIRED);
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 27 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:29:22
+-       let pageOrigin = 'http://localhost';
++       let pageOrigin = "";
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 27 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:32:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /[a-z][a-z0-9+.+-]*:\/\//i;
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 27 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:42:57
+-       const base     = absChallengeUrl.replace(/[?#].*$/, '');
++       const base     = absChallengeUrl.replace(/[?#].*$/, "Stryker was here!");
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 27 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:42:46
+-       const base     = absChallengeUrl.replace(/[?#].*$/, '');
++       const base     = absChallengeUrl.replace(/[?#].$/, '');
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 27 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:43:36
+-       const derived  = base.endsWith('/') ? `${base}{sid}` : `${base}/{sid}`;
++       const derived  = base.endsWith("") ? `${base}{sid}` : `${base}/{sid}`;
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 27 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:42:46
+-       const base     = absChallengeUrl.replace(/[?#].*$/, '');
++       const base     = absChallengeUrl.replace(/[?#].*/, '');
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 27 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:43:60
+-       const derived  = base.endsWith('/') ? `${base}{sid}` : `${base}/{sid}`;
++       const derived  = base.endsWith('/') ? `${base}{sid}` : ``;
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 19 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:50:40
+-           const probe = explicit.replace(/\{[^}]*\}/g, 'XYZ');     // tolerate braces
++           const probe = explicit.replace(/\{[^}]\}/g, 'XYZ');     // tolerate braces
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 16 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:50:40
+-           const probe = explicit.replace(/\{[^}]*\}/g, 'XYZ');     // tolerate braces
++           const probe = explicit.replace(/\{[}]*\}/g, 'XYZ');     // tolerate braces
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 16 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:50:54
+-           const probe = explicit.replace(/\{[^}]*\}/g, 'XYZ');     // tolerate braces
++           const probe = explicit.replace(/\{[^}]*\}/g, "");     // tolerate braces
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 16 more tests!
+
+
+[Survived] ConditionalExpression
+src/agegate/AgeGateConfig.ts:63:5
+-   if (absolute.test(rawContentUrl)) {
++   if (false) {
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 27 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:75:14
+-       .replace(/^\/+/u, '')
++       .replace(/\/+/u, '')
+Tests ran:
+    AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered"
+    AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed"
+    AgeGate – Unit tests redirect action invokes caller-supplied redirect fn
+  and 27 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:40:15
+-       id      : 'ageGate',
++       id      : "",
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:73:29
+-               actions: assign({ error: ({ event }) => event.error }),
++               actions: assign({}),
+Ran all tests for this mutant.
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:73:38
+-               actions: assign({ error: ({ event }) => event.error }),
++               actions: assign({ error: () => undefined }),
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:80:17
+-           entry : 'renderChallenge',
++           entry : "",
+Ran all tests for this mutant.
+
+[Survived] EqualityOperator
+src/agegate/AgeGateMachine.ts:99:40
+-                 guard : ({ context }) => (context.retries ?? 0) >= 2,
++                 guard : ({ context }) => (context.retries ?? 0) > 2,
+Tests ran:
+    AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll ok:false
+    AgeGateMachine (deterministic) Back-off & polling loop backs off 1.5× each retry
+    AgeGateMachine (deterministic) Back-off & polling loop clamps the interval to 30 000 ms
+  and 1 more test!
+
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:100:40
+-                 actions: assign({ error: () => new Error('Maximum retries exceeded') }),
++                 actions: assign({ error: () => undefined }),
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:100:56
+-                 actions: assign({ error: () => new Error('Maximum retries exceeded') }),
++                 actions: assign({ error: () => new Error("") }),
+Tests ran:
+    AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll ok:false
+
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:100:31
+-                 actions: assign({ error: () => new Error('Maximum retries exceeded') }),
++                 actions: assign({}),
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:137:17
+-         verified: { entry: 'redirect', type: 'final' },
++         verified: {},
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:137:26
+-         verified: { entry: 'redirect', type: 'final' },
++         verified: { entry: "", type: 'final' },
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:138:17
+-         failed  : { type: 'final' },
++         failed  : {},
+Ran all tests for this mutant.
+
+[NoCoverage] StringLiteral
+src/agegate/machineServices.ts:45:34
+-       if (!res.ok) throw new Error(`HTTP ${res.status}`);
++       if (!res.ok) throw new Error(``);
+
+[NoCoverage] StringLiteral
+src/agegate/machineServices.ts:70:40
+-       let url = context.cfg.statusUrl ?? '';
++       let url = context.cfg.statusUrl ?? "Stryker was here!";
+
+[NoCoverage] StringLiteral
+src/agegate/machineServices.ts:85:21
+-       throw new Error(`Unexpected status ${res.status}`);
++       throw new Error(``);
+
+[NoCoverage] StringLiteral
+src/agegate/machineServices.ts:95:9
+-           '[AgeGate] cfg missing in context – cannot render challenge',
++           "",
+
+[NoCoverage] BlockStatement
+src/agegate/machineServices.ts:139:13
+-       } catch {
+-         Object.defineProperty(window, 'location', {
+-           value: { href: context.cfg.contentUrl },
+-           writable: true,
+-           configurable: true,
+-         });
+-       }
++       } catch {}
+
+[NoCoverage] StringLiteral
+src/agegate/machineServices.ts:140:37
+-         Object.defineProperty(window, 'location', {
++         Object.defineProperty(window, "", {
+
+[NoCoverage] ObjectLiteral
+src/agegate/machineServices.ts:140:49
+-         Object.defineProperty(window, 'location', {
+-           value: { href: context.cfg.contentUrl },
+-           writable: true,
+-           configurable: true,
+-         });
++         Object.defineProperty(window, 'location', {});
+
+[NoCoverage] ObjectLiteral
+src/agegate/machineServices.ts:141:16
+-           value: { href: context.cfg.contentUrl },
++           value: {},
+
+[NoCoverage] BooleanLiteral
+src/agegate/machineServices.ts:142:19
+-           writable: true,
++           writable: false,
+
+[NoCoverage] BooleanLiteral
+src/agegate/machineServices.ts:143:23
+-           configurable: true,
++           configurable: false,
+
+[Survived] ArrowFunction
+src/agegate/machineServices.ts:25:25
+-     const id = setTimeout(() => controller.abort(), timeout);
++     const id = setTimeout(() => undefined, timeout);
+Tests ran:
+    machineServices.pollStatus builds URL: replacement, encoding & trailing-slash trim
+    machineServices.pollStatus substitutes {sid} placeholder when present
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+[Survived] BlockStatement
+src/agegate/machineServices.ts:28:13
+-     } finally {
+-       clearTimeout(id);
+-     }
++     } finally {}
+Tests ran:
+    machineServices.pollStatus builds URL: replacement, encoding & trailing-slash trim
+    machineServices.pollStatus substitutes {sid} placeholder when present
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+[Survived] ConditionalExpression
+src/agegate/machineServices.ts:45:9
+-       if (!res.ok) throw new Error(`HTTP ${res.status}`);
++       if (false) throw new Error(`HTTP ${res.status}`);
+Tests ran:
+    machineServices.fetchChallenge POSTs JSON with same-origin credentials
+    machineServices.fetchChallenge returns raw JSON when **only** sid fails validation
+    machineServices.fetchChallenge throws when multiple fields are invalid
+  and 1 more test!
+
+
+[Survived] ConditionalExpression
+src/agegate/machineServices.ts:54:30
+-         issues.length === 1 && issues[0]?.path?.[0] === 'sid';
++         issues.length === 1 && true;
+Tests ran:
+    machineServices.fetchChallenge returns raw JSON when **only** sid fails validation
+
+
+[Survived] OptionalChaining
+src/agegate/machineServices.ts:54:30
+-         issues.length === 1 && issues[0]?.path?.[0] === 'sid';
++         issues.length === 1 && issues[0]?.path[0] === 'sid';
+Tests ran:
+    machineServices.fetchChallenge returns raw JSON when **only** sid fails validation
+
+
+[Survived] Regex
+src/agegate/machineServices.ts:74:25
+-         url = url.replace(/\/+$/, '') + '/' + sidEnc;
++         url = url.replace(/\/$/, '') + '/' + sidEnc;
+Tests ran:
+    machineServices.pollStatus builds URL: replacement, encoding & trailing-slash trim
+
+
+[Survived] ConditionalExpression
+src/agegate/machineServices.ts:82:9
+-       if (res.status === 204) return { ok: false };
++       if (true) return { ok: false };
+Tests ran:
+    machineServices.pollStatus builds URL: replacement, encoding & trailing-slash trim
+    machineServices.pollStatus substitutes {sid} placeholder when present
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+[Survived] BooleanLiteral
+src/agegate/machineServices.ts:82:42
+-       if (res.status === 204) return { ok: false };
++       if (res.status === 204) return { ok: true };
+Tests ran:
+    machineServices.pollStatus builds URL: replacement, encoding & trailing-slash trim
+    machineServices.pollStatus substitutes {sid} placeholder when present
+
+
+[Survived] ConditionalExpression
+src/agegate/machineServices.ts:83:9
+-       if (res.status === 200) return StatusSchema.parse(await res.json());
++       if (true) return StatusSchema.parse(await res.json());
+Tests ran:
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:102:7
+-         `proviiwallet://verify?sid=${encodeURIComponent(sid)}` +
++         `` +
+Tests ran:
+    machineActions helpers (renderChallenge, redirect) renders deep-link <a> on mobile with encoded params
+    machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:104:7
+-         `&origin_hash=${encodeURIComponent(origin_hash)}`;
++         ``;
+Tests ran:
+    machineActions helpers (renderChallenge, redirect) renders deep-link <a> on mobile with encoded params
+    machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:108:23
+-       mount.innerHTML = '';
++       mount.innerHTML = "Stryker was here!";
+Tests ran:
+    machineActions helpers (renderChallenge, redirect) renders deep-link <a> on mobile with encoded params
+    machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:113:23
+-         a.textContent = 'Open Provii Wallet';
++         a.textContent = "";
+Tests ran:
+    machineActions helpers (renderChallenge, redirect) renders deep-link <a> on mobile with encoded params
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:114:21
+-         a.className = 'agegate-link';
++         a.className = "";
+Tests ran:
+    machineActions helpers (renderChallenge, redirect) renders deep-link <a> on mobile with encoded params
+
+
+[Survived] BlockStatement
+src/agegate/machineServices.ts:116:12
+-       } else {
+-         const canvas = document.createElement('canvas');
+-         const caption = document.createElement('p');
+-         caption.className = 'agegate-caption';
+-         caption.textContent =
+-           'Scan with Provii Wallet to verify your age.';
+-         mount.append(canvas, caption);
+-         renderQrToCanvas(canvas, uri).catch((e) => {
+-           /* swallow in tests / fallback */
+-           console.error('[AgeGate] QR generation failed', e);
+-           canvas.remove();
+-         });
+-       }
++       } else {}
+Tests ran:
+    machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:119:27
+-         caption.className = 'agegate-caption';
++         caption.className = "";
+Tests ran:
+    machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:121:9
+-           'Scan with Provii Wallet to verify your age.';
++           "";
+Tests ran:
+    machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:126:23
+-           console.error('[AgeGate] QR generation failed', e);
++           console.error("", e);
+Tests ran:
+    machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:27:9
+-       if (this.running) return;
++       if (false) return;
+Tests ran:
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:46:9
+-       if (!this.running) return;
++       if (false) return;
+Tests ran:
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:49:9
+-       if (this.timer !== undefined) {
++       if (true) {
+Tests ran:
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+[Survived] BooleanLiteral
+src/agegate/Poller.ts:47:20
+-       this.running = false;
++       this.running = true;
+Tests ran:
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+[Survived] ObjectLiteral
+src/types/api.ts:9:44
+-     origin_hash: z.string().regex(HEX_64_RE, {
+-       message: 'origin_hash must be 64-char hex string',
+-     }),
++     origin_hash: z.string().regex(HEX_64_RE, {}),
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/types/api.ts:10:14
+-       message: 'origin_hash must be 64-char hex string',
++       message: "",
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/types/api.ts:12:57
+-     exp: z.number().int().refine((ts) => ts > Date.now(), {
+-       message: 'exp must be in the future',
+-     }),
++     exp: z.number().int().refine((ts) => ts > Date.now(), {}),
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/types/api.ts:13:14
+-       message: 'exp must be in the future',
++       message: "",
+Ran all tests for this mutant.
+
+[Survived] BlockStatement
+src/utils/qr.ts:10:21
+-   ): Promise<void> => {
+-     await QRCode.toCanvas(canvas, text, {
+-       errorCorrectionLevel: 'M', // balance between density and resiliency
+-       margin: 1
+-     });
+-   };
++   ): Promise<void> => {};
+Tests ran:
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+[Survived] ObjectLiteral
+src/utils/qr.ts:11:39
+-     await QRCode.toCanvas(canvas, text, {
+-       errorCorrectionLevel: 'M', // balance between density and resiliency
+-       margin: 1
+-     });
++     await QRCode.toCanvas(canvas, text, {});
+Tests ran:
+    AgeGate.init idempotency returns the same promise on repeated calls
+
+
+Ran 6.03 tests per mutant on average.
+---------------------|------------------|----------|-----------|------------|----------|----------|
+                     | % Mutation score |          |           |            |          |          |
+File                 |  total | covered | # killed | # timeout | # survived | # no cov | # errors |
+---------------------|--------|---------|----------|-----------|------------|----------|----------|
+All files            |  65.61 |   72.50 |      109 |        36 |         55 |       21 |      105 |
+ agegate             |  65.17 |   72.78 |       95 |        36 |         49 |       21 |       96 |
+  AgeGate.ts         |  90.00 |  100.00 |       10 |         8 |          0 |        2 |       11 |
+  AgeGateConfig.ts   |  48.98 |   60.00 |       24 |         0 |         16 |        9 |       20 |
+  AgeGateMachine.ts  |  78.43 |   78.43 |       12 |        28 |         11 |        0 |       22 |
+  machineServices.ts |  54.84 |   65.38 |       34 |         0 |         18 |       10 |       43 |
+  Poller.ts          |  78.95 |   78.95 |       15 |         0 |          4 |        0 |        0 |
+ types               |  55.56 |   55.56 |        5 |         0 |          4 |        0 |        8 |
+  api.ts             |  55.56 |   55.56 |        5 |         0 |          4 |        0 |        8 |
+ utils               |  81.82 |   81.82 |        9 |         0 |          2 |        0 |        1 |
+  device.ts          | 100.00 |  100.00 |        9 |         0 |          0 |        0 |        0 |
+  qr.ts              |   0.00 |    0.00 |        0 |         0 |          2 |        0 |        1 |
+---------------------|--------|---------|----------|-----------|------------|----------|----------|
+21:50:36 (145909) ERROR MutationTestReportHelper Final mutation score 65.61 under breaking threshold 90, setting exit code to 1 (failure).
+21:50:36 (145909) INFO MutationTestReportHelper (improve mutation score or set `thresholds.break = null` to prevent this error in the future)
+21:50:37 (145909) INFO HtmlReporter Your report can be found at: file:///home/tim/provii/provii/provii-agegate/reports/mutation/mutation.html
+21:50:37 (145909) INFO MutationTestExecutor Done in 9 minutes 26 seconds.
+
+Mutation testing  [==================================================] 100% (elapsed: ~10m, remaining: n/a) 381/381 Mutants tested (53 survived, 34 timed out)
+
+All tests
+  property/machineServices.property.spec.ts
+    ✓ machineServices Properties fetchChallenge should gracefully handle any valid JSON response [line 55] (killed 3)
+    ✓ machineServices Properties fetchChallenge should throw a specific error for non-OK HTTP responses [line 80] (killed 2)
+    ✓ machineServices Properties pollStatus should throw an error for unexpected HTTP status codes [line 104] (killed 1)
+    ✓ machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on mobile [line 137] (killed 7)
+    ✓ machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on desktop [line 198] (killed 2)
+    ~ machineServices Properties renderChallenge action - URI encoding properties handles edge case of empty string challenge values [line 264] (covered 100)
+  additional‑agegate.spec.ts
+    ✓ AgeGateConfig – validation & normalisation throws when challengeUrl is missing [line 45] (killed 2)
+    ✓ AgeGateConfig – validation & normalisation throws when contentUrl is missing [line 52] (killed 2)
+    ✓ AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl [line 59] (killed 3)
+    ✓ AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin [line 69] (killed 4)
+    ✓ AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid} [line 78] (killed 5)
+    ✓ AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder [line 87] (killed 4)
+    ~ machineServices.fetchChallenge throws the correct HTTP‑error when res.ok === false [line 132] (covered 15)
+    ✓ machineServices.fetchChallenge aborts the request if the timeout elapses and clears the timer afterwards [line 139] (killed 3)
+    ✓ machineServices.pollStatus returns {ok:false} when HTTP 204 [line 171] (killed 1)
+    ✓ machineServices.pollStatus parses body when HTTP 200 [line 177] (killed 3)
+    ✓ machineServices.pollStatus throws on any other HTTP status [line 186] (killed 1)
+    ✓ machineServices.pollStatus stitches URL correctly (trailing‑slash trim & SID encoding) [line 193] (killed 3)
+    ✓ machineServices.renderChallenge – desktop QR fallback removes the <canvas> when QR generation rejects [line 219] (killed 2)
+    ✓ AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2 [line 257] (killed 6)
+    ✓ AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions [line 309] (killed 6)
+    ✓ renderQrToCanvas calls qrcode.toCanvas with the expected options [line 363] (killed 1)
+    ~ renderQrToCanvas propagates errors from qrcode.toCanvas [line 387] (covered 3)
+    ✓ Poller start() is idempotent – callback fires only once per tick [line 417] (killed 7)
+    ✓ Poller stop() cancels future ticks & resets state [line 433] (killed 6)
+    ✓ api schemas – custom error messages origin_hash message is preserved [line 450] (killed 2)
+    ✓ api schemas – custom error messages exp in the past reports correct message [line 462] (killed 2)
+    ✓ isIPhone – negative desktop‑UA case returns false for a desktop user‑agent [line 480] (killed 1)
+  age‑gate‑machine.spec.ts
+    ✓ AgeGateMachine (deterministic) Nominal & error transitions runs the complete happy-path to "verified" [line 60] (killed 3)
+    ✓ AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on fetch failure [line 83] (killed 2)
+    ✓ AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll throws [line 83] (killed 2)
+    ~ AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll ok:false [line 83] (covered 15)
+    ✓ AgeGateMachine (deterministic) Back-off & polling loop backs off 1.5× each retry [line 108] (killed 2)
+    ~ AgeGateMachine (deterministic) Back-off & polling loop clamps the interval to 30 000 ms [line 133] (covered 14)
+  AgeGate.edge.spec.ts
+    ✓ AgeGate – graceful when mount element is missing resolves without error [line 66] (killed 1)
+    ~ AgeGate.init idempotency returns the same promise on repeated calls [line 90] (covered 85)
+    ~ Verification timeout guard still not verified after simulated 1 s [line 102] (covered 67)
+    ✓ AgeGate.init rejection on poll error rejects with the underlying error [line 122] (killed 4)
+  AgeGate.spec.ts
+    ✓ AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered" [line 86] (killed 5)
+    ✓ AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed" [line 97] (killed 2)
+    ✓ AgeGate – Unit tests redirect action invokes caller-supplied redirect fn [line 110] (killed 4)
+    ✓ AgeGate – Unit tests redirect action falls back to window.location.href [line 121] (killed 5)
+    ~ AgeGate – Integration tests renders QR canvas & caption on desktop [line 203] (covered 78)
+    ~ AgeGate – Integration tests renders deep-link anchor on mobile [line 213] (covered 78)
+    ~ AgeGate – Integration tests redirects to contentUrl after verification [line 222] (covered 78)
+    ~ AgeGate – Integration tests propagates init errors [line 235] (covered 78)
+    ~ AgeGate – Real implementation smoke test constructs without throwing [line 259] (covered 81)
+  AgeGateConfig.spec.ts
+    ✓ contentUrl normalisation normalises trailing slash [line 36] (killed 3)
+    ~ contentUrl normalisation normalises multiple trailing /// [line 36] (covered 50)
+    ~ contentUrl normalisation normalises missing leading slash [line 36] (covered 50)
+    ✓ contentUrl normalisation normalises too many leading slashes [line 36] (killed 1)
+    ✓ pollInterval constraints throws when < 500 ms [line 45] (killed 4)
+    ~ pollInterval constraints accepts ≥ 500 ms [line 49] (covered 53)
+    ~ statusUrl logic derives from challengeUrl when omitted [line 58] (covered 50)
+    ✓ statusUrl logic honours explicit override – even with {sid} in hostname [line 63] (killed 4)
+  api.schema.spec.ts
+    ✓ ChallengeSchema – positive accepts a fully valid payload [line 34] (killed 6)
+    ✘ StatusSchema – positive accepts { ok: true } [line 43] (covered 0)
+    ✘ StatusSchema – positive accepts { ok: false, reason } [line 47] (covered 0)
+    ~ ChallengeSchema – negative boundary/anchor checks rejects invalid sid (uuid) [line 64] (covered 4)
+    ✓ ChallengeSchema – negative boundary/anchor checks rejects invalid nonce (length) [line 64] (killed 1)
+    ~ ChallengeSchema – negative boundary/anchor checks rejects invalid sig_site empty [line 64] (covered 4)
+    ✓ ChallengeSchema – negative boundary/anchor checks origin_hash 64‑hex anchor rejects with a leading char [line 69] (killed 2)
+    ~ ChallengeSchema – negative boundary/anchor checks origin_hash 64‑hex anchor rejects with a trailing char [line 75] (covered 4)
+    ✓ ChallengeSchema – negative boundary/anchor checks exp strictly in the future (millisecond precision) rejects when exp === now [line 89] (killed 2)
+    ~ ChallengeSchema – negative boundary/anchor checks exp strictly in the future (millisecond precision) accepts when exp > now [line 93] (covered 4)
+    ✘ StatusSchema – negative rejects non‑boolean ok [line 104] (covered 0)
+  device.spec.ts
+    ✓ device helpers detects iPhone user‑agent [line 29] (killed 1)
+    ✘ device helpers returns false for a desktop user‑agent [line 35] (covered 0)
+    ✓ device helpers detects touch capability via maxTouchPoints [line 43] (killed 5)
+    ✓ device helpers detects touch capability via ontouchstart [line 50] (killed 1)
+    ✓ device helpers returns false when no touch capability is present (boundary case) [line 57] (killed 2)
+  machineServices.spec.ts
+    ✓ machineServices.fetchChallenge POSTs JSON with same-origin credentials [line 57] (killed 4)
+    ✓ machineServices.fetchChallenge returns raw JSON when **only** sid fails validation [line 78] (killed 5)
+    ✓ machineServices.fetchChallenge throws when multiple fields are invalid [line 95] (killed 2)
+    ✓ machineServices.fetchChallenge throws when ctx.cfg is missing [line 103] (killed 1)
+    ✓ machineServices.pollStatus rejects when called before a challenge exists [line 116] (killed 1)
+    ✓ machineServices.pollStatus builds URL: replacement, encoding & trailing-slash trim [line 120] (killed 7)
+    ✓ machineServices.pollStatus substitutes {sid} placeholder when present [line 146] (killed 3)
+    ✓ machineServices.pollStatus throws when ctx.cfg is absent [line 176] (killed 1)
+    ~ machineActions helpers (renderChallenge, redirect) renders deep-link <a> on mobile with encoded params [line 207] (covered 97)
+    ~ machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails [line 217] (covered 100)
+    ✓ machineActions helpers (renderChallenge, redirect) redirect() assigns window.location.href without JSDOM navigation [line 225] (killed 2)
+  Poller.spec.ts
+    ✓ Poller (deterministic) invokes callback until it returns true, then stops [line 14] (killed 11)
+    ✓ Poller (deterministic) stops and logs when the callback throws [line 32] (killed 1)
+
+[NoCoverage] BlockStatement
+src/agegate/AgeGate.ts:58:18
+-             } else {
+-               console.error('AgeGate: redirect called without cfg');
+-             }
++             } else {}
+
+[NoCoverage] StringLiteral
+src/agegate/AgeGate.ts:59:27
+-               console.error('AgeGate: redirect called without cfg');
++               console.error("");
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:9:15
+-     url.replace(/(^|[^:])\/{2,}/g, '$1/');
++     url.replace(/([^:])\/{2,}/g, '$1/');
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices Properties fetchChallenge should throw a specific error for non-OK HTTP responses
+  and 23 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:9:15
+-     url.replace(/(^|[^:])\/{2,}/g, '$1/');
++     url.replace(/(^|[^:])\//g, '$1/');
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices Properties fetchChallenge should throw a specific error for non-OK HTTP responses
+  and 23 more tests!
+
+
+[Survived] ConditionalExpression
+src/agegate/AgeGateConfig.ts:12:3
+-     path !== '/' ? path.replace(/\/+$/u, '') : path;
++     true ? path.replace(/\/+$/u, '') : path;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 39 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:9:34
+-     url.replace(/(^|[^:])\/{2,}/g, '$1/');
++     url.replace(/(^|[^:])\/{2,}/g, "");
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices Properties fetchChallenge should throw a specific error for non-OK HTTP responses
+  and 23 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:12:12
+-     path !== '/' ? path.replace(/\/+$/u, '') : path;
++     path !== "" ? path.replace(/\/+$/u, '') : path;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 39 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:39:22
+-       let pageOrigin = 'http://localhost';
++       let pageOrigin = "";
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 39 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /[a-z][a-z0-9+.+-]*:\/\//i;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 39 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /^[^a-z][a-z0-9+.+-]*:\/\//i;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 39 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /^[a-z][a-z0-9+.+-]:\/\//i;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 39 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /^[a-z][^a-z0-9+.+-]*:\/\//i;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 39 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:53:66
+-       const base    = stripTrailingSlash(this.challengeUrl.replace(/[?#].*$/, ''));
++       const base    = stripTrailingSlash(this.challengeUrl.replace(/[?#].*/, ''));
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 39 more tests!
+
+
+[Survived] MethodExpression
+src/agegate/AgeGateConfig.ts:57:25
+-       if (rawStatusUrl && rawStatusUrl.trim()) {
++       if (rawStatusUrl && rawStatusUrl) {
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 24 more tests!
+
+
+[Survived] MethodExpression
+src/agegate/AgeGateConfig.ts:58:24
+-         const supplied = rawStatusUrl.trim();
++         const supplied = rawStatusUrl;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 24 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:66:42
+-         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, ''); // strip scheme+host
++         const afterHost = maybeAbs.replace(/.*?:\/\/[^/]+/, ''); // strip scheme+host
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 24 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:66:42
+-         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, ''); // strip scheme+host
++         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]/, ''); // strip scheme+host
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 24 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:66:60
+-         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, ''); // strip scheme+host
++         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, "Stryker was here!"); // strip scheme+host
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 24 more tests!
+
+
+[Survived] ArithmeticOperator
+src/agegate/AgeGateConfig.ts:68:9
+-           (afterHost.match(/\{sid\}/g)    || []).length +
+-           (afterHost.match(/%7Bsid%7D/gi) || []).length;
++           (afterHost.match(/\{sid\}/g) || []).length - (afterHost.match(/%7Bsid%7D/gi) || []).length;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 24 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:76:68
+-         finalStatus = squashSlashes(maybeAbs).replace(/%7Bsid%7D/gi, '{sid}');
++         finalStatus = squashSlashes(maybeAbs).replace(/%7Bsid%7D/gi, "");
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices Properties fetchChallenge should throw a specific error for non-OK HTTP responses
+  and 23 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:83:50
+-       const cleanedContent = rawContentUrl.replace(/^\/{2,}/, '/'); // collapse leading ///
++       const cleanedContent = rawContentUrl.replace(/\/{2,}/, '/'); // collapse leading ///
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 38 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:83:61
+-       const cleanedContent = rawContentUrl.replace(/^\/{2,}/, '/'); // collapse leading ///
++       const cleanedContent = rawContentUrl.replace(/^\/{2,}/, ""); // collapse leading ///
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 38 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:93:29
+-       contentAsUrl.hash     = '';
++       contentAsUrl.hash     = "Stryker was here!";
+Tests ran:
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+  and 37 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:94:29
+-       contentAsUrl.search   = '';
++       contentAsUrl.search   = "Stryker was here!";
+Tests ran:
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+  and 37 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:42:15
+-       id      : 'ageGate',
++       id      : "",
+Ran all tests for this mutant.
+
+[NoCoverage] ConditionalExpression
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => true,
+
+[NoCoverage] ConditionalExpression
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => false,
+
+[NoCoverage] EqualityOperator
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => (context.retries ?? 0) > 2,
+
+[NoCoverage] EqualityOperator
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => (context.retries ?? 0) < 2,
+
+[NoCoverage] LogicalOperator
+src/agegate/AgeGateMachine.ts:125:37
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
++                 error: ({ event }) => (event as any).reason && 'Polling failure',
+
+[NoCoverage] StringLiteral
+src/agegate/AgeGateMachine.ts:125:62
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
++                 error: ({ event }) => (event as any).reason ?? "",
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:75:29
+-               actions: assign({ error: ({ event }) => event.error }),
++               actions: assign({}),
+Ran all tests for this mutant.
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:75:38
+-               actions: assign({ error: ({ event }) => event.error }),
++               actions: assign({ error: () => undefined }),
+Ran all tests for this mutant.
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:90:18
+-             input: ({ context }) => ({ context }),
++             input: () => undefined,
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:90:36
+-             input: ({ context }) => ({ context }),
++             input: ({ context }) => ({}),
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    AgeGateMachine (deterministic) Nominal & error transitions runs the complete happy-path to "verified"
+  and 6 more tests!
+
+
+[Survived] EqualityOperator
+src/agegate/AgeGateMachine.ts:101:40
+-                 guard : ({ context }) => (context.retries ?? 0) >= 2,
++                 guard : ({ context }) => (context.retries ?? 0) > 2,
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+    AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll ok:false
+    AgeGateMachine (deterministic) Back-off & polling loop backs off 1.5× each retry
+  and 2 more tests!
+
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:102:31
+-                 actions: assign({ error: () => new Error('Maximum retries exceeded') }),
++                 actions: assign({}),
+Ran all tests for this mutant.
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:102:40
+-                 actions: assign({ error: () => new Error('Maximum retries exceeded') }),
++                 actions: assign({ error: () => undefined }),
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:102:56
+-                 actions: assign({ error: () => new Error('Maximum retries exceeded') }),
++                 actions: assign({ error: () => new Error("") }),
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+    AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll ok:false
+
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:121:22
+-             POLL_FAIL: {
+-               target: 'failed',
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
+-               actions: assign({
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
+-               }),
+-             },
++             POLL_FAIL: {},
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:122:21
+-               target: 'failed',
++               target: "",
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:124:29
+-               actions: assign({
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
+-               }),
++               actions: assign({}),
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:120:13
+-           on: {
+-             POLL_FAIL: {
+-               target: 'failed',
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
+-               actions: assign({
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
+-               }),
+-             },
+-           },
++           on: {},
+Ran all tests for this mutant.
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:125:22
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
++                 error: () => undefined,
+Ran all tests for this mutant.
+
+[NoCoverage] BlockStatement
+src/agegate/machineServices.ts:32:18
+-        .catch(e => { clearTimeout(id); rej(e); });
++        .catch(e => {});
+
+[NoCoverage] StringLiteral
+src/agegate/machineServices.ts:81:40
+-       let url = context.cfg.statusUrl ?? '';
++       let url = context.cfg.statusUrl ?? "Stryker was here!";
+
+[NoCoverage] StringLiteral
+src/agegate/machineServices.ts:107:21
+-         console.error('[AgeGate] cfg missing in context – cannot render challenge');
++         console.error("");
+
+[NoCoverage] BlockStatement
+src/agegate/machineServices.ts:149:13
+-       } catch {
+-         Object.defineProperty(window, 'location', {
+-           value       : { href: context.cfg.contentUrl },
+-           writable    : true,
+-           configurable: true,
+-         });
+-       }
++       } catch {}
+
+[NoCoverage] StringLiteral
+src/agegate/machineServices.ts:150:37
+-         Object.defineProperty(window, 'location', {
++         Object.defineProperty(window, "", {
+
+[NoCoverage] ObjectLiteral
+src/agegate/machineServices.ts:150:49
+-         Object.defineProperty(window, 'location', {
+-           value       : { href: context.cfg.contentUrl },
+-           writable    : true,
+-           configurable: true,
+-         });
++         Object.defineProperty(window, 'location', {});
+
+[NoCoverage] ObjectLiteral
+src/agegate/machineServices.ts:151:23
+-           value       : { href: context.cfg.contentUrl },
++           value       : {},
+
+[NoCoverage] BooleanLiteral
+src/agegate/machineServices.ts:152:23
+-           writable    : true,
++           writable    : false,
+
+[NoCoverage] BooleanLiteral
+src/agegate/machineServices.ts:153:23
+-           configurable: true,
++           configurable: false,
+
+[Survived] LogicalOperator
+src/agegate/machineServices.ts:45:26
+-       const needsTimeout = 'timeout' in context && typeof context.timeout === 'number';
++       const needsTimeout = 'timeout' in context || typeof context.timeout === 'number';
+Tests ran:
+    machineServices.fetchChallenge throws the correct HTTP‑error when res.ok === false
+    machineServices.fetchChallenge aborts the request if the timeout elapses and clears the timer afterwards
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 5 more tests!
+
+
+[Survived] ObjectLiteral
+src/agegate/machineServices.ts:50:11
+-             { method: 'POST', credentials: 'same-origin' },
++             {},
+Tests ran:
+    machineServices.fetchChallenge aborts the request if the timeout elapses and clears the timer afterwards
+
+
+[Survived] ConditionalExpression
+src/agegate/machineServices.ts:45:50
+-       const needsTimeout = 'timeout' in context && typeof context.timeout === 'number';
++       const needsTimeout = 'timeout' in context && true;
+Tests ran:
+    machineServices.fetchChallenge aborts the request if the timeout elapses and clears the timer afterwards
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:50:21
+-             { method: 'POST', credentials: 'same-origin' },
++             { method: "", credentials: 'same-origin' },
+Tests ran:
+    machineServices.fetchChallenge aborts the request if the timeout elapses and clears the timer afterwards
+
+
+[Survived] LogicalOperator
+src/agegate/machineServices.ts:67:26
+-       const onlySidIssue = issues.length === 1 && issues[0]?.path?.[0] === 'sid';
++       const onlySidIssue = issues.length === 1 || issues[0]?.path?.[0] === 'sid';
+Tests ran:
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices.fetchChallenge returns raw JSON when **only** sid fails validation
+    machineServices.fetchChallenge throws when multiple fields are invalid
+
+
+[Survived] ConditionalExpression
+src/agegate/machineServices.ts:67:26
+-       const onlySidIssue = issues.length === 1 && issues[0]?.path?.[0] === 'sid';
++       const onlySidIssue = true && issues[0]?.path?.[0] === 'sid';
+Tests ran:
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices.fetchChallenge returns raw JSON when **only** sid fails validation
+    machineServices.fetchChallenge throws when multiple fields are invalid
+
+
+[Survived] ConditionalExpression
+src/agegate/machineServices.ts:67:49
+-       const onlySidIssue = issues.length === 1 && issues[0]?.path?.[0] === 'sid';
++       const onlySidIssue = issues.length === 1 && true;
+Tests ran:
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices.fetchChallenge returns raw JSON when **only** sid fails validation
+
+
+[Survived] OptionalChaining
+src/agegate/machineServices.ts:67:49
+-       const onlySidIssue = issues.length === 1 && issues[0]?.path?.[0] === 'sid';
++       const onlySidIssue = issues.length === 1 && issues[0]?.path[0] === 'sid';
+Tests ran:
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices.fetchChallenge returns raw JSON when **only** sid fails validation
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:119:23
+-       mount.innerHTML = '';
++       mount.innerHTML = "Stryker was here!";
+Tests ran:
+    machineServices.renderChallenge – desktop QR fallback removes the <canvas> when QR generation rejects
+    machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on mobile
+    machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on desktop
+  and 3 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:130:29
+-         caption.className   = 'agegate-caption';
++         caption.className   = "";
+Tests ran:
+    machineServices.renderChallenge – desktop QR fallback removes the <canvas> when QR generation rejects
+    machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on desktop
+    machineServices Properties renderChallenge action - URI encoding properties handles edge case of empty string challenge values
+  and 1 more test!
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:131:29
+-         caption.textContent = 'Scan with Provii Wallet to verify your age.';
++         caption.textContent = "";
+Tests ran:
+    machineServices.renderChallenge – desktop QR fallback removes the <canvas> when QR generation rejects
+    machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on desktop
+    machineServices Properties renderChallenge action - URI encoding properties handles edge case of empty string challenge values
+  and 1 more test!
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:136:23
+-           console.error('[AgeGate] QR generation failed', e);
++           console.error("", e);
+Tests ran:
+    machineServices.renderChallenge – desktop QR fallback removes the <canvas> when QR generation rejects
+    machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:42:11
+-         if (this.running) {
++         if (true) {
+Tests ran:
+    Poller start() is idempotent – callback fires only once per tick
+    Poller (deterministic) invokes callback until it returns true, then stops
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:53:9
+-       if (!this.running) return;
++       if (false) return;
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+[Survived] BooleanLiteral
+src/agegate/Poller.ts:54:20
+-       this.running = false;
++       this.running = true;
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+[Survived] BooleanLiteral
+src/agegate/Poller.ts:59:23
+-         this.hasFired = true;
++         this.hasFired = false;
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:62:9
+-       if (this.timer !== undefined) {
++       if (true) {
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+Ran 12.17 tests per mutant on average.
+---------------------|------------------|----------|-----------|------------|----------|----------|
+                     | % Mutation score |          |           |            |          |          |
+File                 |  total | covered | # killed | # timeout | # survived | # no cov | # errors |
+---------------------|--------|---------|----------|-----------|------------|----------|----------|
+All files            |  75.27 |   80.08 |      179 |        34 |         53 |       17 |       98 |
+ agegate             |  72.76 |   77.92 |      153 |        34 |         53 |       17 |       94 |
+  AgeGate.ts         |  90.00 |  100.00 |       14 |         4 |          0 |        2 |       11 |
+  AgeGateConfig.ts   |  66.67 |   66.67 |       44 |         0 |         22 |        0 |       22 |
+  AgeGateMachine.ts  |  69.23 |   76.27 |       19 |        26 |         14 |        6 |       19 |
+  machineServices.ts |  72.37 |   82.09 |       51 |         4 |         12 |        9 |       42 |
+  Poller.ts          |  83.33 |   83.33 |       25 |         0 |          5 |        0 |        0 |
+ types               | 100.00 |  100.00 |       15 |         0 |          0 |        0 |        2 |
+  api.ts             | 100.00 |  100.00 |       15 |         0 |          0 |        0 |        2 |
+ utils               | 100.00 |  100.00 |       11 |         0 |          0 |        0 |        2 |
+  device.ts          | 100.00 |  100.00 |       10 |         0 |          0 |        0 |        0 |
+  qr.ts              | 100.00 |  100.00 |        1 |         0 |          0 |        0 |        2 |
+---------------------|--------|---------|----------|-----------|------------|----------|----------|
+22:37:45 (109084) ERROR MutationTestReportHelper Final mutation score 75.27 under breaking threshold 90, setting exit code to 1 (failure).
+22:37:45 (109084) INFO MutationTestReportHelper (improve mutation score or set `thresholds.break = null` to prevent this error in the future)
+22:37:45 (109084) INFO HtmlReporter Your report can be found at: file:///home/tim/provii/provii/provii-agegate/reports/mutation/mutation.html
+22:37:45 (109084) INFO MutationTestExecutor Done in 10 minutes 55 seconds.
+
+
+Mutation testing  [==================================================] 100% (elapsed: ~11m, remaining: n/a) 381/381 Mutants tested (46 survived, 34 timed out)
+
+All tests
+  property/machineServices.property.spec.ts
+    ✓ machineServices Properties fetchChallenge should gracefully handle any valid JSON response [line 55] (killed 3)
+    ✓ machineServices Properties fetchChallenge should throw a specific error for non-OK HTTP responses [line 80] (killed 1)
+    ✓ machineServices Properties pollStatus should throw an error for unexpected HTTP status codes [line 104] (killed 1)
+    ✓ machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on mobile [line 137] (killed 7)
+    ✓ machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on desktop [line 198] (killed 2)
+    ~ machineServices Properties renderChallenge action - URI encoding properties handles edge case of empty string challenge values [line 264] (covered 100)
+  additional‑agegate.spec.ts
+    ✓ AgeGateConfig – validation & normalisation throws when challengeUrl is missing [line 45] (killed 3)
+    ✓ AgeGateConfig – validation & normalisation throws when contentUrl is missing [line 52] (killed 2)
+    ✓ AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl [line 59] (killed 3)
+    ✓ AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin [line 69] (killed 3)
+    ✓ AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid} [line 78] (killed 4)
+    ✓ AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder [line 87] (killed 3)
+    ✓ machineServices.fetchChallenge throws the correct HTTP‑error when res.ok === false [line 132] (killed 1)
+    ✓ machineServices.fetchChallenge aborts the request if the timeout elapses and clears the timer afterwards [line 139] (killed 4)
+    ✓ machineServices.pollStatus returns {ok:false} when HTTP 204 [line 171] (killed 2)
+    ✓ machineServices.pollStatus parses body when HTTP 200 [line 177] (killed 3)
+    ✓ machineServices.pollStatus throws on any other HTTP status [line 186] (killed 1)
+    ✓ machineServices.pollStatus stitches URL correctly (trailing‑slash trim & SID encoding) [line 193] (killed 3)
+    ✓ machineServices.renderChallenge – desktop QR fallback removes the <canvas> when QR generation rejects [line 219] (killed 2)
+    ✓ AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2 [line 257] (killed 7)
+    ✓ AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions [line 309] (killed 4)
+    ✓ renderQrToCanvas calls qrcode.toCanvas with the expected options [line 363] (killed 1)
+    ~ renderQrToCanvas propagates errors from qrcode.toCanvas [line 387] (covered 3)
+    ✓ Poller start() is idempotent – callback fires only once per tick [line 417] (killed 7)
+    ✓ Poller stop() cancels future ticks & resets state [line 433] (killed 5)
+    ✓ api schemas – custom error messages origin_hash message is preserved [line 450] (killed 2)
+    ✓ api schemas – custom error messages exp in the past reports correct message [line 462] (killed 3)
+    ✓ isIPhone – negative desktop‑UA case returns false for a desktop user‑agent [line 480] (killed 1)
+  age‑gate‑machine.spec.ts
+    ✓ AgeGateMachine (deterministic) Nominal & error transitions runs the complete happy-path to "verified" [line 60] (killed 2)
+    ✓ AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on fetch failure [line 83] (killed 2)
+    ✓ AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll throws [line 83] (killed 2)
+    ~ AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll ok:false [line 83] (covered 15)
+    ✓ AgeGateMachine (deterministic) Back-off & polling loop backs off 1.5× each retry [line 108] (killed 2)
+    ~ AgeGateMachine (deterministic) Back-off & polling loop clamps the interval to 30 000 ms [line 133] (covered 14)
+  AgeGate.edge.spec.ts
+    ✓ AgeGate – graceful when mount element is missing resolves without error [line 66] (killed 1)
+    ~ AgeGate.init idempotency returns the same promise on repeated calls [line 90] (covered 85)
+    ~ Verification timeout guard still not verified after simulated 1 s [line 102] (covered 67)
+    ✓ AgeGate.init rejection on poll error rejects with the underlying error [line 122] (killed 4)
+  AgeGate.spec.ts
+    ✓ AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered" [line 86] (killed 5)
+    ✓ AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed" [line 97] (killed 2)
+    ✓ AgeGate – Unit tests redirect action invokes caller-supplied redirect fn [line 110] (killed 4)
+    ✓ AgeGate – Unit tests redirect action falls back to window.location.href [line 121] (killed 4)
+    ~ AgeGate – Integration tests renders QR canvas & caption on desktop [line 203] (covered 78)
+    ~ AgeGate – Integration tests renders deep-link anchor on mobile [line 213] (covered 78)
+    ~ AgeGate – Integration tests redirects to contentUrl after verification [line 222] (covered 78)
+    ~ AgeGate – Integration tests propagates init errors [line 235] (covered 78)
+    ~ AgeGate – Real implementation smoke test constructs without throwing [line 259] (covered 81)
+  AgeGateConfig.extra.spec.ts
+    ✓ derives statusUrl when statusUrl is only whitespace [line 15] (killed 1)
+    ✓ normalises %7Bsid%7D back to {sid} [line 29] (killed 2)
+    ✓ rejects statusUrl containing BOTH raw and encoded {sid} [line 43] (killed 1)
+    ✓ collapses "//" inside the path without deleting the preceding char [line 58] (killed 2)
+    ~ leaves the solitary "/" in contentUrl intact [line 72] (covered 50)
+    ✓ preserves inner "//" segments in contentUrl [line 85] (killed 1)
+    ✓ does not mistake an embedded scheme in the path for an absolute URL [line 98] (killed 1)
+    ~ recognises an absolute challengeUrl that starts with a letter [line 111] (covered 50)
+    ~ trims leading & trailing spaces from an explicit statusUrl [line 125] (covered 74)
+  AgeGateConfig.spec.ts
+    ✓ contentUrl normalisation normalises trailing slash [line 36] (killed 5)
+    ✓ contentUrl normalisation normalises multiple trailing /// [line 36] (killed 1)
+    ~ contentUrl normalisation normalises missing leading slash [line 36] (covered 50)
+    ✓ contentUrl normalisation normalises too many leading slashes [line 36] (killed 1)
+    ✓ pollInterval constraints throws when < 500 ms [line 45] (killed 4)
+    ~ pollInterval constraints accepts ≥ 500 ms [line 49] (covered 53)
+    ~ statusUrl logic derives from challengeUrl when omitted [line 58] (covered 50)
+    ✓ statusUrl logic honours explicit override – even with {sid} in hostname [line 63] (killed 5)
+  api.schema.spec.ts
+    ✓ ChallengeSchema – positive accepts a fully valid payload [line 34] (killed 3)
+    ✘ StatusSchema – positive accepts { ok: true } [line 43] (covered 0)
+    ✘ StatusSchema – positive accepts { ok: false, reason } [line 47] (covered 0)
+    ~ ChallengeSchema – negative boundary/anchor checks rejects invalid sid (uuid) [line 64] (covered 4)
+    ✓ ChallengeSchema – negative boundary/anchor checks rejects invalid nonce (length) [line 64] (killed 1)
+    ~ ChallengeSchema – negative boundary/anchor checks rejects invalid sig_site empty [line 64] (covered 4)
+    ✓ ChallengeSchema – negative boundary/anchor checks origin_hash 64‑hex anchor rejects with a leading char [line 69] (killed 2)
+    ~ ChallengeSchema – negative boundary/anchor checks origin_hash 64‑hex anchor rejects with a trailing char [line 75] (covered 4)
+    ✓ ChallengeSchema – negative boundary/anchor checks exp strictly in the future (millisecond precision) rejects when exp === now [line 89] (killed 2)
+    ~ ChallengeSchema – negative boundary/anchor checks exp strictly in the future (millisecond precision) accepts when exp > now [line 93] (covered 4)
+    ✘ StatusSchema – negative rejects non‑boolean ok [line 104] (covered 0)
+  device.spec.ts
+    ✓ device helpers detects iPhone user‑agent [line 29] (killed 1)
+    ✘ device helpers returns false for a desktop user‑agent [line 35] (covered 0)
+    ✓ device helpers detects touch capability via maxTouchPoints [line 43] (killed 5)
+    ✓ device helpers detects touch capability via ontouchstart [line 50] (killed 1)
+    ✓ device helpers returns false when no touch capability is present (boundary case) [line 57] (killed 2)
+  machineServices.spec.ts
+    ✓ machineServices.fetchChallenge POSTs JSON with same-origin credentials [line 57] (killed 6)
+    ✓ machineServices.fetchChallenge returns raw JSON when **only** sid fails validation [line 78] (killed 5)
+    ✓ machineServices.fetchChallenge throws when multiple fields are invalid [line 95] (killed 2)
+    ✓ machineServices.fetchChallenge throws when ctx.cfg is missing [line 103] (killed 1)
+    ✓ machineServices.pollStatus rejects when called before a challenge exists [line 116] (killed 1)
+    ✓ machineServices.pollStatus builds URL: replacement, encoding & trailing-slash trim [line 120] (killed 6)
+    ✓ machineServices.pollStatus substitutes {sid} placeholder when present [line 146] (killed 3)
+    ✓ machineServices.pollStatus throws when ctx.cfg is absent [line 176] (killed 1)
+    ~ machineActions helpers (renderChallenge, redirect) renders deep-link <a> on mobile with encoded params [line 207] (covered 97)
+    ~ machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails [line 217] (covered 100)
+    ✓ machineActions helpers (renderChallenge, redirect) redirect() assigns window.location.href without JSDOM navigation [line 225] (killed 2)
+  Poller.spec.ts
+    ✓ Poller (deterministic) invokes callback until it returns true, then stops [line 14] (killed 11)
+    ✓ Poller (deterministic) stops and logs when the callback throws [line 32] (killed 1)
+
+[NoCoverage] BlockStatement
+src/agegate/AgeGate.ts:58:18
+-             } else {
+-               console.error('AgeGate: redirect called without cfg');
+-             }
++             } else {}
+
+[NoCoverage] StringLiteral
+src/agegate/AgeGate.ts:59:27
+-               console.error('AgeGate: redirect called without cfg');
++               console.error("");
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:9:15
+-     url.replace(/(^|[^:])\/{2,}/g, '$1/');
++     url.replace(/([^:])\/{2,}/g, '$1/');
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices Properties fetchChallenge should throw a specific error for non-OK HTTP responses
+  and 26 more tests!
+
+
+[Survived] ConditionalExpression
+src/agegate/AgeGateConfig.ts:12:3
+-     path !== '/' ? path.replace(/\/+$/u, '') : path;
++     true ? path.replace(/\/+$/u, '') : path;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:12:12
+-     path !== '/' ? path.replace(/\/+$/u, '') : path;
++     path !== "" ? path.replace(/\/+$/u, '') : path;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:39:22
+-       let pageOrigin = 'http://localhost';
++       let pageOrigin = "";
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /^[^a-z][a-z0-9+.+-]*:\/\//i;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /^[a-z][^a-z0-9+.+-]*:\/\//i;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /^[a-z][a-z0-9+.+-]:\/\//i;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:53:66
+-       const base    = stripTrailingSlash(this.challengeUrl.replace(/[?#].*$/, ''));
++       const base    = stripTrailingSlash(this.challengeUrl.replace(/[?#].*/, ''));
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] MethodExpression
+src/agegate/AgeGateConfig.ts:58:24
+-         const supplied = rawStatusUrl.trim();
++         const supplied = rawStatusUrl;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 28 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:66:42
+-         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, ''); // strip scheme+host
++         const afterHost = maybeAbs.replace(/.*?:\/\/[^/]+/, ''); // strip scheme+host
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 28 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:66:42
+-         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, ''); // strip scheme+host
++         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]/, ''); // strip scheme+host
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 28 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:66:60
+-         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, ''); // strip scheme+host
++         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, "Stryker was here!"); // strip scheme+host
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 28 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:83:61
+-       const cleanedContent = rawContentUrl.replace(/^\/{2,}/, '/'); // collapse leading ///
++       const cleanedContent = rawContentUrl.replace(/^\/{2,}/, ""); // collapse leading ///
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 46 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:93:29
+-       contentAsUrl.hash     = '';
++       contentAsUrl.hash     = "Stryker was here!";
+Tests ran:
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+  and 45 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:94:29
+-       contentAsUrl.search   = '';
++       contentAsUrl.search   = "Stryker was here!";
+Tests ran:
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+  and 45 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:42:15
+-       id      : 'ageGate',
++       id      : "",
+Ran all tests for this mutant.
+
+[NoCoverage] ConditionalExpression
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => true,
+
+[NoCoverage] ConditionalExpression
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => false,
+
+[NoCoverage] EqualityOperator
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => (context.retries ?? 0) > 2,
+
+[NoCoverage] EqualityOperator
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => (context.retries ?? 0) < 2,
+
+[NoCoverage] LogicalOperator
+src/agegate/AgeGateMachine.ts:125:37
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
++                 error: ({ event }) => (event as any).reason && 'Polling failure',
+
+[NoCoverage] StringLiteral
+src/agegate/AgeGateMachine.ts:125:62
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
++                 error: ({ event }) => (event as any).reason ?? "",
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:75:29
+-               actions: assign({ error: ({ event }) => event.error }),
++               actions: assign({}),
+Ran all tests for this mutant.
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:75:38
+-               actions: assign({ error: ({ event }) => event.error }),
++               actions: assign({ error: () => undefined }),
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:90:36
+-             input: ({ context }) => ({ context }),
++             input: ({ context }) => ({}),
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    AgeGateMachine (deterministic) Nominal & error transitions runs the complete happy-path to "verified"
+  and 6 more tests!
+
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:90:18
+-             input: ({ context }) => ({ context }),
++             input: () => undefined,
+Ran all tests for this mutant.
+
+[Survived] EqualityOperator
+src/agegate/AgeGateMachine.ts:101:40
+-                 guard : ({ context }) => (context.retries ?? 0) >= 2,
++                 guard : ({ context }) => (context.retries ?? 0) > 2,
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+    AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll ok:false
+    AgeGateMachine (deterministic) Back-off & polling loop backs off 1.5× each retry
+  and 2 more tests!
+
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:102:40
+-                 actions: assign({ error: () => new Error('Maximum retries exceeded') }),
++                 actions: assign({ error: () => undefined }),
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:102:56
+-                 actions: assign({ error: () => new Error('Maximum retries exceeded') }),
++                 actions: assign({ error: () => new Error("") }),
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+    AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll ok:false
+
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:102:31
+-                 actions: assign({ error: () => new Error('Maximum retries exceeded') }),
++                 actions: assign({}),
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:120:13
+-           on: {
+-             POLL_FAIL: {
+-               target: 'failed',
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
+-               actions: assign({
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
+-               }),
+-             },
+-           },
++           on: {},
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:121:22
+-             POLL_FAIL: {
+-               target: 'failed',
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
+-               actions: assign({
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
+-               }),
+-             },
++             POLL_FAIL: {},
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:122:21
+-               target: 'failed',
++               target: "",
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:124:29
+-               actions: assign({
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
+-               }),
++               actions: assign({}),
+Ran all tests for this mutant.
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:125:22
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
++                 error: () => undefined,
+Ran all tests for this mutant.
+
+[NoCoverage] BlockStatement
+src/agegate/machineServices.ts:32:18
+-        .catch(e => { clearTimeout(id); rej(e); });
++        .catch(e => {});
+
+[NoCoverage] StringLiteral
+src/agegate/machineServices.ts:81:40
+-       let url = context.cfg.statusUrl ?? '';
++       let url = context.cfg.statusUrl ?? "Stryker was here!";
+
+[NoCoverage] StringLiteral
+src/agegate/machineServices.ts:107:21
+-         console.error('[AgeGate] cfg missing in context – cannot render challenge');
++         console.error("");
+
+[NoCoverage] BlockStatement
+src/agegate/machineServices.ts:149:13
+-       } catch {
+-         Object.defineProperty(window, 'location', {
+-           value       : { href: context.cfg.contentUrl },
+-           writable    : true,
+-           configurable: true,
+-         });
+-       }
++       } catch {}
+
+[NoCoverage] StringLiteral
+src/agegate/machineServices.ts:150:37
+-         Object.defineProperty(window, 'location', {
++         Object.defineProperty(window, "", {
+
+[NoCoverage] ObjectLiteral
+src/agegate/machineServices.ts:150:49
+-         Object.defineProperty(window, 'location', {
+-           value       : { href: context.cfg.contentUrl },
+-           writable    : true,
+-           configurable: true,
+-         });
++         Object.defineProperty(window, 'location', {});
+
+[NoCoverage] ObjectLiteral
+src/agegate/machineServices.ts:151:23
+-           value       : { href: context.cfg.contentUrl },
++           value       : {},
+
+[NoCoverage] BooleanLiteral
+src/agegate/machineServices.ts:152:23
+-           writable    : true,
++           writable    : false,
+
+[NoCoverage] BooleanLiteral
+src/agegate/machineServices.ts:153:23
+-           configurable: true,
++           configurable: false,
+
+[Survived] LogicalOperator
+src/agegate/machineServices.ts:45:26
+-       const needsTimeout = 'timeout' in context && typeof context.timeout === 'number';
++       const needsTimeout = 'timeout' in context || typeof context.timeout === 'number';
+Tests ran:
+    machineServices.fetchChallenge throws the correct HTTP‑error when res.ok === false
+    machineServices.fetchChallenge aborts the request if the timeout elapses and clears the timer afterwards
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 5 more tests!
+
+
+[Survived] ConditionalExpression
+src/agegate/machineServices.ts:45:50
+-       const needsTimeout = 'timeout' in context && typeof context.timeout === 'number';
++       const needsTimeout = 'timeout' in context && true;
+Tests ran:
+    machineServices.fetchChallenge aborts the request if the timeout elapses and clears the timer afterwards
+
+
+[Survived] ObjectLiteral
+src/agegate/machineServices.ts:50:11
+-             { method: 'POST', credentials: 'same-origin' },
++             {},
+Tests ran:
+    machineServices.fetchChallenge aborts the request if the timeout elapses and clears the timer afterwards
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:50:21
+-             { method: 'POST', credentials: 'same-origin' },
++             { method: "", credentials: 'same-origin' },
+Tests ran:
+    machineServices.fetchChallenge aborts the request if the timeout elapses and clears the timer afterwards
+
+
+[Survived] LogicalOperator
+src/agegate/machineServices.ts:67:26
+-       const onlySidIssue = issues.length === 1 && issues[0]?.path?.[0] === 'sid';
++       const onlySidIssue = issues.length === 1 || issues[0]?.path?.[0] === 'sid';
+Tests ran:
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices.fetchChallenge returns raw JSON when **only** sid fails validation
+    machineServices.fetchChallenge throws when multiple fields are invalid
+
+
+[Survived] ConditionalExpression
+src/agegate/machineServices.ts:67:26
+-       const onlySidIssue = issues.length === 1 && issues[0]?.path?.[0] === 'sid';
++       const onlySidIssue = true && issues[0]?.path?.[0] === 'sid';
+Tests ran:
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices.fetchChallenge returns raw JSON when **only** sid fails validation
+    machineServices.fetchChallenge throws when multiple fields are invalid
+
+
+[Survived] ConditionalExpression
+src/agegate/machineServices.ts:67:49
+-       const onlySidIssue = issues.length === 1 && issues[0]?.path?.[0] === 'sid';
++       const onlySidIssue = issues.length === 1 && true;
+Tests ran:
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices.fetchChallenge returns raw JSON when **only** sid fails validation
+
+
+[Survived] OptionalChaining
+src/agegate/machineServices.ts:67:49
+-       const onlySidIssue = issues.length === 1 && issues[0]?.path?.[0] === 'sid';
++       const onlySidIssue = issues.length === 1 && issues[0]?.path[0] === 'sid';
+Tests ran:
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices.fetchChallenge returns raw JSON when **only** sid fails validation
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:119:23
+-       mount.innerHTML = '';
++       mount.innerHTML = "Stryker was here!";
+Tests ran:
+    machineServices.renderChallenge – desktop QR fallback removes the <canvas> when QR generation rejects
+    machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on mobile
+    machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on desktop
+  and 3 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:130:29
+-         caption.className   = 'agegate-caption';
++         caption.className   = "";
+Tests ran:
+    machineServices.renderChallenge – desktop QR fallback removes the <canvas> when QR generation rejects
+    machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on desktop
+    machineServices Properties renderChallenge action - URI encoding properties handles edge case of empty string challenge values
+  and 1 more test!
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:136:23
+-           console.error('[AgeGate] QR generation failed', e);
++           console.error("", e);
+Tests ran:
+    machineServices.renderChallenge – desktop QR fallback removes the <canvas> when QR generation rejects
+    machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails
+
+
+[Survived] StringLiteral
+src/agegate/machineServices.ts:131:29
+-         caption.textContent = 'Scan with Provii Wallet to verify your age.';
++         caption.textContent = "";
+Tests ran:
+    machineServices.renderChallenge – desktop QR fallback removes the <canvas> when QR generation rejects
+    machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on desktop
+    machineServices Properties renderChallenge action - URI encoding properties handles edge case of empty string challenge values
+  and 1 more test!
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:42:11
+-         if (this.running) {
++         if (true) {
+Tests ran:
+    Poller start() is idempotent – callback fires only once per tick
+    Poller (deterministic) invokes callback until it returns true, then stops
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:53:9
+-       if (!this.running) return;
++       if (false) return;
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+[Survived] BooleanLiteral
+src/agegate/Poller.ts:54:20
+-       this.running = false;
++       this.running = true;
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+[Survived] BooleanLiteral
+src/agegate/Poller.ts:59:23
+-         this.hasFired = true;
++         this.hasFired = false;
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:62:9
+-       if (this.timer !== undefined) {
++       if (true) {
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+Ran 13.18 tests per mutant on average.
+---------------------|------------------|----------|-----------|------------|----------|----------|
+                     | % Mutation score |          |           |            |          |          |
+File                 |  total | covered | # killed | # timeout | # survived | # no cov | # errors |
+---------------------|--------|---------|----------|-----------|------------|----------|----------|
+All files            |  77.74 |   82.71 |      186 |        34 |         46 |       17 |       98 |
+ agegate             |  75.49 |   80.83 |      160 |        34 |         46 |       17 |       94 |
+  AgeGate.ts         |  90.00 |  100.00 |       14 |         4 |          0 |        2 |       11 |
+  AgeGateConfig.ts   |  77.27 |   77.27 |       51 |         0 |         15 |        0 |       22 |
+  AgeGateMachine.ts  |  69.23 |   76.27 |       19 |        26 |         14 |        6 |       19 |
+  machineServices.ts |  72.37 |   82.09 |       52 |         3 |         12 |        9 |       42 |
+  Poller.ts          |  83.33 |   83.33 |       24 |         1 |          5 |        0 |        0 |
+ types               | 100.00 |  100.00 |       15 |         0 |          0 |        0 |        2 |
+  api.ts             | 100.00 |  100.00 |       15 |         0 |          0 |        0 |        2 |
+ utils               | 100.00 |  100.00 |       11 |         0 |          0 |        0 |        2 |
+  device.ts          | 100.00 |  100.00 |       10 |         0 |          0 |        0 |        0 |
+  qr.ts              | 100.00 |  100.00 |        1 |         0 |          0 |        0 |        2 |
+---------------------|--------|---------|----------|-----------|------------|----------|----------|
+13:25:39 (15754) ERROR MutationTestReportHelper Final mutation score 77.74 under breaking threshold 90, setting exit code to 1 (failure).
+13:25:39 (15754) INFO MutationTestReportHelper (improve mutation score or set `thresholds.break = null` to prevent this error in the future)
+13:25:39 (15754) INFO HtmlReporter Your report can be found at: file:///home/tim/provii/provii/provii-agegate/reports/mutation/mutation.html
+13:25:39 (15754) INFO MutationTestExecutor Done in 12 minutes 1 second.
+
+[NoCoverage] BlockStatement
+src/agegate/AgeGate.ts:58:18
+-             } else {
+-               console.error('AgeGate: redirect called without cfg');
+-             }
++             } else {}
+
+[NoCoverage] StringLiteral
+src/agegate/AgeGate.ts:59:27
+-               console.error('AgeGate: redirect called without cfg');
++               console.error("");
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:9:15
+-     url.replace(/(^|[^:])\/{2,}/g, '$1/');
++     url.replace(/([^:])\/{2,}/g, '$1/');
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    machineServices Properties fetchChallenge should throw a specific error for non-OK HTTP responses
+  and 26 more tests!
+
+
+[Survived] ConditionalExpression
+src/agegate/AgeGateConfig.ts:12:3
+-     path !== '/' ? path.replace(/\/+$/u, '') : path;
++     true ? path.replace(/\/+$/u, '') : path;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:12:12
+-     path !== '/' ? path.replace(/\/+$/u, '') : path;
++     path !== "" ? path.replace(/\/+$/u, '') : path;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:39:22
+-       let pageOrigin = 'http://localhost';
++       let pageOrigin = "";
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /^[^a-z][a-z0-9+.+-]*:\/\//i;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /^[a-z][a-z0-9+.+-]:\/\//i;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /^[a-z][^a-z0-9+.+-]*:\/\//i;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:53:66
+-       const base    = stripTrailingSlash(this.challengeUrl.replace(/[?#].*$/, ''));
++       const base    = stripTrailingSlash(this.challengeUrl.replace(/[?#].*/, ''));
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 48 more tests!
+
+
+[Survived] MethodExpression
+src/agegate/AgeGateConfig.ts:58:24
+-         const supplied = rawStatusUrl.trim();
++         const supplied = rawStatusUrl;
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 28 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:66:42
+-         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, ''); // strip scheme+host
++         const afterHost = maybeAbs.replace(/.*?:\/\/[^/]+/, ''); // strip scheme+host
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 28 more tests!
+
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:66:42
+-         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, ''); // strip scheme+host
++         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]/, ''); // strip scheme+host
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 28 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:66:60
+-         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, ''); // strip scheme+host
++         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, "Stryker was here!"); // strip scheme+host
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+  and 28 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:83:61
+-       const cleanedContent = rawContentUrl.replace(/^\/{2,}/, '/'); // collapse leading ///
++       const cleanedContent = rawContentUrl.replace(/^\/{2,}/, ""); // collapse leading ///
+Tests ran:
+    AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+  and 46 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:93:29
+-       contentAsUrl.hash     = '';
++       contentAsUrl.hash     = "Stryker was here!";
+Tests ran:
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+  and 45 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:94:29
+-       contentAsUrl.search   = '';
++       contentAsUrl.search   = "Stryker was here!";
+Tests ran:
+    AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin
+    AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid}
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+  and 45 more tests!
+
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:42:15
+-       id      : 'ageGate',
++       id      : "",
+Ran all tests for this mutant.
+
+[NoCoverage] ConditionalExpression
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => true,
+
+[NoCoverage] ConditionalExpression
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => false,
+
+[NoCoverage] EqualityOperator
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => (context.retries ?? 0) > 2,
+
+[NoCoverage] EqualityOperator
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => (context.retries ?? 0) < 2,
+
+[NoCoverage] LogicalOperator
+src/agegate/AgeGateMachine.ts:125:37
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
++                 error: ({ event }) => (event as any).reason && 'Polling failure',
+
+[NoCoverage] StringLiteral
+src/agegate/AgeGateMachine.ts:125:62
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
++                 error: ({ event }) => (event as any).reason ?? "",
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:75:29
+-               actions: assign({ error: ({ event }) => event.error }),
++               actions: assign({}),
+Ran all tests for this mutant.
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:75:38
+-               actions: assign({ error: ({ event }) => event.error }),
++               actions: assign({ error: () => undefined }),
+Ran all tests for this mutant.
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:90:18
+-             input: ({ context }) => ({ context }),
++             input: () => undefined,
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:90:36
+-             input: ({ context }) => ({ context }),
++             input: ({ context }) => ({}),
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+    AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions
+    AgeGateMachine (deterministic) Nominal & error transitions runs the complete happy-path to "verified"
+  and 6 more tests!
+
+
+[Survived] EqualityOperator
+src/agegate/AgeGateMachine.ts:101:40
+-                 guard : ({ context }) => (context.retries ?? 0) >= 2,
++                 guard : ({ context }) => (context.retries ?? 0) > 2,
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+    AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll ok:false
+    AgeGateMachine (deterministic) Back-off & polling loop backs off 1.5× each retry
+  and 2 more tests!
+
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:102:40
+-                 actions: assign({ error: () => new Error('Maximum retries exceeded') }),
++                 actions: assign({ error: () => undefined }),
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:102:31
+-                 actions: assign({ error: () => new Error('Maximum retries exceeded') }),
++                 actions: assign({}),
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:102:56
+-                 actions: assign({ error: () => new Error('Maximum retries exceeded') }),
++                 actions: assign({ error: () => new Error("") }),
+Tests ran:
+    AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2
+    AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll ok:false
+
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:120:13
+-           on: {
+-             POLL_FAIL: {
+-               target: 'failed',
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
+-               actions: assign({
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
+-               }),
+-             },
+-           },
++           on: {},
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:121:22
+-             POLL_FAIL: {
+-               target: 'failed',
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
+-               actions: assign({
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
+-               }),
+-             },
++             POLL_FAIL: {},
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:124:29
+-               actions: assign({
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
+-               }),
++               actions: assign({}),
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateMachine.ts:122:21
+-               target: 'failed',
++               target: "",
+Ran all tests for this mutant.
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:125:22
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
++                 error: () => undefined,
+Ran all tests for this mutant.
+
+[Survived] OptionalChaining
+src/agegate/machineServices.ts:67:49
+-       const onlySidIssue = issues.length === 1 && issues[0]?.path?.[0] === 'sid';
++       const onlySidIssue = issues.length === 1 && issues[0]?.path[0] === 'sid';
+Tests ran:
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    returns raw JSON when exactly one issue and it is `sid`
+    throws when there is one issue but it is *not* sid
+  and 1 more test!
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:42:11
+-         if (this.running) {
++         if (true) {
+Tests ran:
+    Poller start() is idempotent – callback fires only once per tick
+    Poller (deterministic) invokes callback until it returns true, then stops
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:53:9
+-       if (!this.running) return;
++       if (false) return;
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+[Survived] BooleanLiteral
+src/agegate/Poller.ts:54:20
+-       this.running = false;
++       this.running = true;
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+[Survived] BooleanLiteral
+src/agegate/Poller.ts:59:23
+-         this.hasFired = true;
++         this.hasFired = false;
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:62:9
+-       if (this.timer !== undefined) {
++       if (true) {
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+Ran 14.04 tests per mutant on average.
+---------------------|------------------|----------|-----------|------------|----------|----------|
+                     | % Mutation score |          |           |            |          |          |
+File                 |  total | covered | # killed | # timeout | # survived | # no cov | # errors |
+---------------------|--------|---------|----------|-----------|------------|----------|----------|
+All files            |  84.81 |   87.27 |      207 |        33 |         35 |        8 |       98 |
+ agegate             |  83.27 |   85.94 |      181 |        33 |         35 |        8 |       94 |
+  AgeGate.ts         |  90.00 |  100.00 |       13 |         5 |          0 |        2 |       11 |
+  AgeGateConfig.ts   |  77.27 |   77.27 |       51 |         0 |         15 |        0 |       22 |
+  AgeGateMachine.ts  |  69.23 |   76.27 |       19 |        26 |         14 |        6 |       19 |
+  machineServices.ts |  98.68 |   98.68 |       73 |         2 |          1 |        0 |       42 |
+  Poller.ts          |  83.33 |   83.33 |       25 |         0 |          5 |        0 |        0 |
+ types               | 100.00 |  100.00 |       15 |         0 |          0 |        0 |        2 |
+  api.ts             | 100.00 |  100.00 |       15 |         0 |          0 |        0 |        2 |
+ utils               | 100.00 |  100.00 |       11 |         0 |          0 |        0 |        2 |
+  device.ts          | 100.00 |  100.00 |       10 |         0 |          0 |        0 |        0 |
+  qr.ts              | 100.00 |  100.00 |        1 |         0 |          0 |        0 |        2 |
+---------------------|--------|---------|----------|-----------|------------|----------|----------|
+13:53:15 (31365) ERROR MutationTestReportHelper Final mutation score 84.81 under breaking threshold 90, setting exit code to 1 (failure).
+13:53:15 (31365) INFO MutationTestReportHelper (improve mutation score or set `thresholds.break = null` to prevent this error in the future)
+13:53:15 (31365) INFO HtmlReporter Your report can be found at: file:///home/tim/provii/provii/provii-agegate/reports/mutation/mutation.html
+13:53:15 (31365) INFO MutationTestExecutor Done in 12 minutes 54 seconds.
+
+All tests
+  property/machineServices.property.spec.ts
+    ~ machineServices Properties fetchChallenge should gracefully handle any valid JSON response [line 55] (covered 103)
+    ✓ machineServices Properties fetchChallenge should throw a specific error for non-OK HTTP responses [line 80] (killed 1)
+    ✓ machineServices Properties pollStatus should throw an error for unexpected HTTP status codes [line 104] (killed 1)
+    ✓ machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on mobile [line 137] (killed 7)
+    ✓ machineServices Properties renderChallenge action - URI encoding properties should always properly URI-encode all challenge parameters on desktop [line 198] (killed 2)
+    ~ machineServices Properties renderChallenge action - URI encoding properties handles edge case of empty string challenge values [line 264] (covered 100)
+  additional‑agegate.spec.ts
+    ✓ AgeGateConfig – validation & normalisation throws when challengeUrl is missing [line 45] (killed 2)
+    ✓ AgeGateConfig – validation & normalisation throws when contentUrl is missing [line 52] (killed 2)
+    ✓ AgeGateConfig – validation & normalisation rejects cross‑origin contentUrl [line 59] (killed 3)
+    ✓ AgeGateConfig – validation & normalisation accepts a *relative* contentUrl and prefixes with page origin [line 69] (killed 3)
+    ✓ AgeGateConfig – validation & normalisation derives statusUrl, strips query/fragment and adds {sid} [line 78] (killed 4)
+    ✓ AgeGateConfig – validation & normalisation rejects a statusUrl containing more than one placeholder [line 87] (killed 2)
+    ✓ machineServices.fetchChallenge throws the correct HTTP‑error when res.ok === false [line 132] (killed 1)
+    ✓ machineServices.fetchChallenge aborts the request if the timeout elapses and clears the timer afterwards [line 139] (killed 4)
+    ✓ machineServices.pollStatus returns {ok:false} when HTTP 204 [line 171] (killed 1)
+    ✓ machineServices.pollStatus parses body when HTTP 200 [line 177] (killed 3)
+    ✓ machineServices.pollStatus throws on any other HTTP status [line 186] (killed 1)
+    ✓ machineServices.pollStatus stitches URL correctly (trailing‑slash trim & SID encoding) [line 193] (killed 3)
+    ✓ machineServices.renderChallenge – desktop QR fallback removes the <canvas> when QR generation rejects [line 219] (killed 1)
+    ✓ AgeGateMachine – max‑retries guard & entry actions goes to "failed" immediately when retries >= 2 [line 257] (killed 3)
+    ✓ AgeGateMachine – max‑retries guard & entry actions invokes renderChallenge & redirect entry actions [line 309] (killed 3)
+    ✓ renderQrToCanvas calls qrcode.toCanvas with the expected options [line 363] (killed 1)
+    ~ renderQrToCanvas propagates errors from qrcode.toCanvas [line 387] (covered 3)
+    ✓ Poller start() is idempotent – callback fires only once per tick [line 417] (killed 8)
+    ✓ Poller stop() cancels future ticks & resets state [line 433] (killed 7)
+    ✓ api schemas – custom error messages origin_hash message is preserved [line 450] (killed 2)
+    ✓ api schemas – custom error messages exp in the past reports correct message [line 462] (killed 5)
+    ✓ isIPhone – negative desktop‑UA case returns false for a desktop user‑agent [line 480] (killed 1)
+  age‑gate‑machine.spec.ts
+    ~ AgeGateMachine (deterministic) Nominal & error transitions runs the complete happy-path to "verified" [line 60] (covered 3)
+    ~ AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on fetch failure [line 83] (covered 2)
+    ~ AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll throws [line 83] (covered 3)
+    ~ AgeGateMachine (deterministic) Nominal & error transitions goes to "failed" on poll ok:false [line 83] (covered 15)
+    ✓ AgeGateMachine (deterministic) Back-off & polling loop backs off 1.5× each retry [line 108] (killed 2)
+    ~ AgeGateMachine (deterministic) Back-off & polling loop clamps the interval to 30 000 ms [line 133] (covered 14)
+  AgeGate.edge.spec.ts
+    ✓ AgeGate – graceful when mount element is missing resolves without error [line 66] (killed 1)
+    ~ AgeGate.init idempotency returns the same promise on repeated calls [line 90] (covered 85)
+    ~ Verification timeout guard still not verified after simulated 1 s [line 102] (covered 67)
+    ✓ AgeGate.init rejection on poll error rejects with the underlying error [line 122] (killed 4)
+  AgeGate.spec.ts
+    ✓ AgeGate – Unit tests init() promise lifecycle resolves when snapshot hits "rendered" [line 86] (killed 4)
+    ✓ AgeGate – Unit tests init() promise lifecycle rejects when snapshot hits "failed" [line 97] (killed 2)
+    ✓ AgeGate – Unit tests redirect action invokes caller-supplied redirect fn [line 110] (killed 4)
+    ✓ AgeGate – Unit tests redirect action falls back to window.location.href [line 121] (killed 3)
+    ~ AgeGate – Integration tests renders QR canvas & caption on desktop [line 203] (covered 78)
+    ~ AgeGate – Integration tests renders deep-link anchor on mobile [line 213] (covered 78)
+    ~ AgeGate – Integration tests redirects to contentUrl after verification [line 222] (covered 78)
+    ~ AgeGate – Integration tests propagates init errors [line 235] (covered 78)
+    ~ AgeGate – Real implementation smoke test constructs without throwing [line 259] (covered 81)
+  AgeGateConfig.extra.spec.ts
+    ✓ derives statusUrl when statusUrl is only whitespace [line 15] (killed 2)
+    ✓ normalises %7Bsid%7D back to {sid} [line 29] (killed 1)
+    ✓ rejects statusUrl containing BOTH raw and encoded {sid} [line 43] (killed 2)
+    ✓ collapses "//" inside the path without deleting the preceding char [line 58] (killed 2)
+    ~ leaves the solitary "/" in contentUrl intact [line 72] (covered 50)
+    ✓ preserves inner "//" segments in contentUrl [line 85] (killed 1)
+    ~ does not mistake an embedded scheme in the path for an absolute URL [line 98] (covered 50)
+    ~ recognises an absolute challengeUrl that starts with a letter [line 111] (covered 50)
+    ~ trims leading & trailing spaces from an explicit statusUrl [line 125] (covered 74)
+  AgeGateConfig.spec.ts
+    ✓ contentUrl normalisation normalises trailing slash [line 36] (killed 3)
+    ~ contentUrl normalisation normalises multiple trailing /// [line 36] (covered 50)
+    ~ contentUrl normalisation normalises missing leading slash [line 36] (covered 50)
+    ✓ contentUrl normalisation normalises too many leading slashes [line 36] (killed 1)
+    ✓ pollInterval constraints throws when < 500 ms [line 45] (killed 3)
+    ~ pollInterval constraints accepts ≥ 500 ms [line 49] (covered 53)
+    ✓ statusUrl logic derives from challengeUrl when omitted [line 58] (killed 1)
+    ✓ statusUrl logic honours explicit override – even with {sid} in hostname [line 63] (killed 4)
+  AgeGateMachine.extra.spec.ts
+    ✓ AgeGateMachine – extra coverage has id "ageGate" [line 66] (killed 1)
+    ✓ AgeGateMachine – extra coverage stores the error when fetchChallenge rejects [line 71] (killed 4)
+    ✓ AgeGateMachine – extra coverage forwards context to pollStatus [line 84] (killed 4)
+    ✓ AgeGateMachine – extra coverage fails after three negative polls with "Maximum retries exceeded" [line 101] (killed 11)
+    ✓ AgeGateMachine – extra coverage Polling retry behavior retries polling before giving up [line 125] (killed 1)
+    ~ AgeGateMachine – extra coverage Polling retry behavior fails with default message when retries ≥ 2 and no reason [line 151] (covered 14)
+    ✓ AgeGateMachine – extra coverage Polling retry behavior handles POLL_FAIL with custom reason [line 167] (killed 2)
+  api.schema.spec.ts
+    ✓ ChallengeSchema – positive accepts a fully valid payload [line 34] (killed 4)
+    ✘ StatusSchema – positive accepts { ok: true } [line 43] (covered 0)
+    ✘ StatusSchema – positive accepts { ok: false, reason } [line 47] (covered 0)
+    ~ ChallengeSchema – negative boundary/anchor checks rejects invalid sid (uuid) [line 64] (covered 4)
+    ✓ ChallengeSchema – negative boundary/anchor checks rejects invalid nonce (length) [line 64] (killed 1)
+    ~ ChallengeSchema – negative boundary/anchor checks rejects invalid sig_site empty [line 64] (covered 4)
+    ✓ ChallengeSchema – negative boundary/anchor checks origin_hash 64‑hex anchor rejects with a leading char [line 69] (killed 2)
+    ~ ChallengeSchema – negative boundary/anchor checks origin_hash 64‑hex anchor rejects with a trailing char [line 75] (covered 4)
+    ✓ ChallengeSchema – negative boundary/anchor checks exp strictly in the future (millisecond precision) rejects when exp === now [line 89] (killed 1)
+    ~ ChallengeSchema – negative boundary/anchor checks exp strictly in the future (millisecond precision) accepts when exp > now [line 93] (covered 4)
+    ✘ StatusSchema – negative rejects non‑boolean ok [line 104] (covered 0)
+  device.spec.ts
+    ✓ device helpers detects iPhone user‑agent [line 29] (killed 1)
+    ✘ device helpers returns false for a desktop user‑agent [line 35] (covered 0)
+    ✓ device helpers detects touch capability via maxTouchPoints [line 43] (killed 5)
+    ✓ device helpers detects touch capability via ontouchstart [line 50] (killed 1)
+    ✓ device helpers returns false when no touch capability is present (boundary case) [line 57] (killed 2)
+  machineServices.extra.spec.ts
+    ✓ fetchChallenge propagates the error when the underlying fetch rejects [line 49] (killed 1)
+    ✓ pollStatus falls back to “/sid” when statusUrl is absent [line 60] (killed 1)
+    ✓ renderChallenge logs an explanatory error when cfg is absent [line 77] (killed 1)
+    ✓ redirect re‑defines window.location when direct navigation throws [line 91] (killed 8)
+    ✓ ignores timeout when it is not a number [line 123] (killed 4)
+    ✓ sends the exact POST options when it uses fetchWithTimeout [line 140] (killed 2)
+    ✓ returns raw JSON when exactly one issue and it is `sid` [line 159] (killed 2)
+    ✓ throws when there is one issue but it is *not* sid [line 175] (killed 3)
+    ✓ throws when more than one validation issue is present [line 192] (killed 1)
+    ✓ mobile renderChallenge wipes the mount before appending the link [line 209] (killed 1)
+    ✓ desktop renderChallenge adds a caption with correct class & text [line 227] (killed 2)
+    ✓ logs “[AgeGate] QR generation failed” when QR generation rejects [line 248] (killed 2)
+  machineServices.spec.ts
+    ✓ machineServices.fetchChallenge POSTs JSON with same-origin credentials [line 57] (killed 3)
+    ✓ machineServices.fetchChallenge returns raw JSON when **only** sid fails validation [line 78] (killed 3)
+    ✓ machineServices.fetchChallenge throws when multiple fields are invalid [line 95] (killed 1)
+    ✓ machineServices.fetchChallenge throws when ctx.cfg is missing [line 103] (killed 1)
+    ✓ machineServices.pollStatus rejects when called before a challenge exists [line 116] (killed 1)
+    ✓ machineServices.pollStatus builds URL: replacement, encoding & trailing-slash trim [line 120] (killed 7)
+    ✓ machineServices.pollStatus substitutes {sid} placeholder when present [line 146] (killed 3)
+    ✓ machineServices.pollStatus throws when ctx.cfg is absent [line 176] (killed 1)
+    ~ machineActions helpers (renderChallenge, redirect) renders deep-link <a> on mobile with encoded params [line 207] (covered 97)
+    ~ machineActions helpers (renderChallenge, redirect) renders QR canvas on desktop and removes it if QR generation fails [line 217] (covered 100)
+    ~ machineActions helpers (renderChallenge, redirect) redirect() assigns window.location.href without JSDOM navigation [line 225] (covered 82)
+  Poller.spec.ts
+    ✓ Poller (deterministic) invokes callback until it returns true, then stops [line 14] (killed 9)
+    ✓ Poller (deterministic) stops and logs when the callback throws [line 32] (killed 1)
+
+[NoCoverage] StringLiteral
+src/agegate/AgeGate.ts:59:27
+-               console.error('AgeGate: redirect called without cfg');
++               console.error("");
+
+[NoCoverage] BlockStatement
+src/agegate/AgeGate.ts:58:18
+-             } else {
+-               console.error('AgeGate: redirect called without cfg');
+-             }
++             } else {}
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:9:15
+-     url.replace(/(^|[^:])\/{2,}/g, '$1/');
++     url.replace(/([^:])\/{2,}/g, '$1/');
+Ran all tests for this mutant.
+
+[Survived] ConditionalExpression
+src/agegate/AgeGateConfig.ts:12:3
+-     path !== '/' ? path.replace(/\/+$/u, '') : path;
++     true ? path.replace(/\/+$/u, '') : path;
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:12:12
+-     path !== '/' ? path.replace(/\/+$/u, '') : path;
++     path !== "" ? path.replace(/\/+$/u, '') : path;
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:39:22
+-       let pageOrigin = 'http://localhost';
++       let pageOrigin = "";
+Ran all tests for this mutant.
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /^[^a-z][a-z0-9+.+-]*:\/\//i;
+Ran all tests for this mutant.
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /^[a-z][a-z0-9+.+-]:\/\//i;
+Ran all tests for this mutant.
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:45:22
+-       const absolute = /^[a-z][a-z0-9+.+-]*:\/\//i;
++       const absolute = /^[a-z][^a-z0-9+.+-]*:\/\//i;
+Ran all tests for this mutant.
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:53:66
+-       const base    = stripTrailingSlash(this.challengeUrl.replace(/[?#].*$/, ''));
++       const base    = stripTrailingSlash(this.challengeUrl.replace(/[?#].*/, ''));
+Ran all tests for this mutant.
+
+[Survived] MethodExpression
+src/agegate/AgeGateConfig.ts:58:24
+-         const supplied = rawStatusUrl.trim();
++         const supplied = rawStatusUrl;
+Ran all tests for this mutant.
+
+[Survived] Regex
+src/agegate/AgeGateConfig.ts:66:42
+-         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, ''); // strip scheme+host
++         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]/, ''); // strip scheme+host
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:66:60
+-         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, ''); // strip scheme+host
++         const afterHost = maybeAbs.replace(/^.*?:\/\/[^/]+/, "Stryker was here!"); // strip scheme+host
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:83:61
+-       const cleanedContent = rawContentUrl.replace(/^\/{2,}/, '/'); // collapse leading ///
++       const cleanedContent = rawContentUrl.replace(/^\/{2,}/, ""); // collapse leading ///
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:93:29
+-       contentAsUrl.hash     = '';
++       contentAsUrl.hash     = "Stryker was here!";
+Ran all tests for this mutant.
+
+[Survived] StringLiteral
+src/agegate/AgeGateConfig.ts:94:29
+-       contentAsUrl.search   = '';
++       contentAsUrl.search   = "Stryker was here!";
+Ran all tests for this mutant.
+
+[NoCoverage] ConditionalExpression
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => true,
+
+[NoCoverage] ConditionalExpression
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => false,
+
+[NoCoverage] EqualityOperator
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => (context.retries ?? 0) > 2,
+
+[NoCoverage] EqualityOperator
+src/agegate/AgeGateMachine.ts:123:38
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
++               guard : ({ context }) => (context.retries ?? 0) < 2,
+
+[NoCoverage] LogicalOperator
+src/agegate/AgeGateMachine.ts:125:37
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
++                 error: ({ event }) => (event as any).reason && 'Polling failure',
+
+[NoCoverage] StringLiteral
+src/agegate/AgeGateMachine.ts:125:62
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
++                 error: ({ event }) => (event as any).reason ?? "",
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:124:29
+-               actions: assign({
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
+-               }),
++               actions: assign({}),
+Ran all tests for this mutant.
+
+[Survived] ArrowFunction
+src/agegate/AgeGateMachine.ts:125:22
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
++                 error: () => undefined,
+Ran all tests for this mutant.
+
+[Survived] ObjectLiteral
+src/agegate/AgeGateMachine.ts:120:13
+-           on: {
+-             POLL_FAIL: {
+-               target: 'failed',
+-               guard : ({ context }) => (context.retries ?? 0) >= 2,
+-               actions: assign({
+-                 error: ({ event }) => (event as any).reason ?? 'Polling failure',
+-               }),
+-             },
+-           },
++           on: {},
+Ran all tests for this mutant.
+
+[Survived] OptionalChaining
+src/agegate/machineServices.ts:67:49
+-       const onlySidIssue = issues.length === 1 && issues[0]?.path?.[0] === 'sid';
++       const onlySidIssue = issues.length === 1 && issues[0]?.path[0] === 'sid';
+Tests ran:
+    machineServices Properties fetchChallenge should gracefully handle any valid JSON response
+    returns raw JSON when exactly one issue and it is `sid`
+    throws when there is one issue but it is *not* sid
+  and 1 more test!
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:42:11
+-         if (this.running) {
++         if (true) {
+Tests ran:
+    Poller start() is idempotent – callback fires only once per tick
+    Poller (deterministic) invokes callback until it returns true, then stops
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:53:9
+-       if (!this.running) return;
++       if (false) return;
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+[Survived] BooleanLiteral
+src/agegate/Poller.ts:54:20
+-       this.running = false;
++       this.running = true;
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+[Survived] BooleanLiteral
+src/agegate/Poller.ts:59:23
+-         this.hasFired = true;
++         this.hasFired = false;
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+
+
+[Survived] ConditionalExpression
+src/agegate/Poller.ts:62:9
+-       if (this.timer !== undefined) {
++       if (true) {
+Tests ran:
+    Poller stop() cancels future ticks & resets state
+    Poller (deterministic) invokes callback until it returns true, then stops
+    Poller (deterministic) stops and logs when the callback throws
+
+
+Ran 17.64 tests per mutant on average.
+---------------------|------------------|----------|-----------|------------|----------|----------|
+                     | % Mutation score |          |           |            |          |          |
+File                 |  total | covered | # killed | # timeout | # survived | # no cov | # errors |
+---------------------|--------|---------|----------|-----------|------------|----------|----------|
+All files            |  88.64 |   91.32 |      209 |        33 |         23 |        8 |      108 |
+ agegate             |  87.45 |   90.38 |      183 |        33 |         23 |        8 |      104 |
+  AgeGate.ts         |  90.00 |  100.00 |       13 |         5 |          0 |        2 |       11 |
+  AgeGateConfig.ts   |  75.00 |   75.00 |       42 |         0 |         14 |        0 |       32 |
+  AgeGateMachine.ts  |  86.15 |   94.92 |       30 |        26 |          3 |        6 |       19 |
+  machineServices.ts |  98.68 |   98.68 |       73 |         2 |          1 |        0 |       42 |
+  Poller.ts          |  83.33 |   83.33 |       25 |         0 |          5 |        0 |        0 |
+ types               | 100.00 |  100.00 |       15 |         0 |          0 |        0 |        2 |
+  api.ts             | 100.00 |  100.00 |       15 |         0 |          0 |        0 |        2 |
+ utils               | 100.00 |  100.00 |       11 |         0 |          0 |        0 |        2 |
+  device.ts          | 100.00 |  100.00 |       10 |         0 |          0 |        0 |        0 |
+  qr.ts              | 100.00 |  100.00 |        1 |         0 |          0 |        0 |        2 |
+---------------------|--------|---------|----------|-----------|------------|----------|----------|
+14:32:34 (51725) ERROR MutationTestReportHelper Final mutation score 88.64 under breaking threshold 90, setting exit code to 1 (failure).
+14:32:34 (51725) INFO MutationTestReportHelper (improve mutation score or set `thresholds.break = null` to prevent this error in the future)
+14:32:34 (51725) INFO HtmlReporter Your report can be found at: file:///home/tim/provii/provii/provii-agegate/reports/mutation/mutation.html
+14:32:34 (51725) INFO MutationTestExecutor Done in 13 minutes 55 seconds.

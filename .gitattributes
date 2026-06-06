@@ -1,0 +1,37 @@
+# Auto-detect text files and normalise line endings
+* text=auto
+
+# TypeScript / JavaScript
+*.ts text
+*.tsx text
+*.js text
+*.mjs text
+*.cjs text
+
+# Data / config
+*.json text
+*.yml text
+*.yaml text
+*.toml text
+
+# Web
+*.html text
+*.css text
+*.svg text
+
+# Documentation
+*.md text
+
+# Shell
+*.sh text eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

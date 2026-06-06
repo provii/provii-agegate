@@ -1,0 +1,200 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE*'
+      - '.gitignore'
+      - 'CHANGELOG*'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE*'
+      - '.gitignore'
+      - 'CHANGELOG*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+
+      - name: Check formatting
+        run: npx prettier --check 'src/**/*.ts'
+
+      - name: Check for unused code
+        run: npx --yes knip --no-progress
+
+      - run: npm audit --audit-level high
+      - run: npm run test:ci -- --coverage
+
+      - run: npm run build
+      - run: npm run sri
+
+  mutation:
+    needs: build
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Restore Stryker incremental cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: reports/stryker-incremental.json
+          key: stryker-incremental-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            stryker-incremental-${{ runner.os }}-
+
+      - name: Run Stryker (PR , changed files only)
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          npx stryker run \
+            --reporters html,clear-text \
+            --incremental \
+            --since origin/main
+
+      # Scoped to high-value logic modules to complete within the 50 min
+      # timeout on a cold cache. The standalone mutants.yml workflow
+      # (weekly, 60 min) covers the full src/** scope. Excluding:
+      #   - src/i18n/locales/** (static translation data, no logic)
+      #   - src/types/** (type declarations, not runtime code)
+      #   - src/styles/** (theme configuration, no branching logic)
+      #   - src/ui/** (DOM rendering, covered better by E2E)
+      #   - src/api/** (already excluded in stryker.conf.mjs)
+      #   - src/index.ts, src/preview.ts (re-export barrels)
+      - name: Run Stryker (main , scoped incremental)
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          npx stryker run \
+            --reporters html,clear-text \
+            --incremental \
+            --mutate 'src/core/**/*.ts' \
+            --mutate 'src/utils/**/*.ts' \
+            --mutate 'src/errors/**/*.ts' \
+            --mutate 'src/modes/**/*.ts' \
+            --mutate 'src/agegate/**/*.ts' \
+            --mutate 'src/i18n/index.ts' \
+            --mutate '!src/api/**/*'
+
+      - name: Upload HTML report (always)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: stryker-report
+          path: reports/mutation/html
+
+  bundle-size:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Check bundle size
+        run: |
+          BROWSER_SIZE=$(stat -c%s dist/agegate.browser.js 2>/dev/null || stat -f%z dist/agegate.browser.js)
+          BROWSER_SIZE_KB=$((BROWSER_SIZE / 1024))
+
+          ESM_SIZE=$(stat -c%s dist/index.js 2>/dev/null || stat -f%z dist/index.js)
+          ESM_SIZE_KB=$((ESM_SIZE / 1024))
+
+          CJS_SIZE=$(stat -c%s dist/index.cjs 2>/dev/null || stat -f%z dist/index.cjs)
+          CJS_SIZE_KB=$((CJS_SIZE / 1024))
+
+          echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Bundle | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| agegate.browser.js | ${BROWSER_SIZE_KB} KB |" >> $GITHUB_STEP_SUMMARY
+          echo "| index.js (ESM) | ${ESM_SIZE_KB} KB |" >> $GITHUB_STEP_SUMMARY
+          echo "| index.cjs (CJS) | ${CJS_SIZE_KB} KB |" >> $GITHUB_STEP_SUMMARY
+
+          # Fail if browser bundle exceeds 350KB (includes qrcode + xstate + qr-code-styling + DOMPurify)
+          # DOMPurify was added for logoSvg sanitisation (HIGH-3 security finding).
+          if [ "$BROWSER_SIZE_KB" -gt 350 ]; then
+            echo "::error::Browser bundle size (${BROWSER_SIZE_KB}KB) exceeds 350KB limit"
+            exit 1
+          fi
+
+          echo "Bundle size check passed"
+
+  ci-success:
+    name: CI Success
+    needs: [build, bundle-size, mutation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+    steps:
+      - name: Check required jobs
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "::error::One or more required jobs failed or were cancelled"
+            exit 1
+          fi
+          echo "All required jobs passed"

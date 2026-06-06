@@ -1,0 +1,42 @@
+# Zizmor configuration for provii-agegate.
+#
+# Each rule entry below documents *why* a given finding is acceptable so
+# future maintainers can re-evaluate the suppression rather than treating
+# it as opaque noise. Any finding not listed here is still a hard fail.
+
+rules:
+  cache-poisoning:
+    # actions/setup-node with `cache: npm` is the officially-recommended
+    # way to enable npm cache restore on GitHub-hosted runners. Zizmor
+    # flags every callsite as a Low-confidence cache-poisoning candidate.
+    # We accept it because:
+    #   - the cache key is derived from the lockfile hash by the action
+    #     itself (no caller-supplied key under our control), and
+    #   - the cache is scoped per-runner per-ref, so a poisoned entry
+    #     can't cross project boundaries.
+    ignore:
+      - secure-build.yml
+      - ci.yml
+
+  dangerous-triggers:
+    # cla.yml uses pull_request_target + issue_comment so the CLA
+    # Assistant Lite action can write back to the PR. The workflow
+    # itself never checks out PR-author code , it only inspects metadata
+    # and posts a CLA-status comment. This is the documented usage
+    # pattern from CLA Assistant Lite.
+    ignore:
+      - cla.yml
+
+  unpinned-uses:
+    # SLSA's reusable workflow generator MUST be referenced by tag (not
+    # SHA) per the SLSA spec; the generator validates its own ref and
+    # refuses to run from a SHA pin. See:
+    # https://github.com/slsa-framework/slsa-github-generator/blob/main/RULES.md
+    ignore:
+      - secure-build.yml
+
+  archived-uses:
+    # contributor-assistant/github-action is archived but still
+    # functional and SHA-pinned. No maintained alternative exists.
+    ignore:
+      - cla.yml

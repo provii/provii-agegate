@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "lib": ["DOM", "ES2022"],
+
+    "moduleResolution": "node16",
+
+    /* no JS output */
+    "noEmit": true,
+
+    /* strictness */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitOverride": true,
+    // Temporarily disabled for mutation testing
+    // "exactOptionalPropertyTypes": true,
+
+    /* tooling globals */
+    "types": ["node", "jest", "@playwright/test"],
+
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": false
+  },
+
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "e2e/**/*",
+    "examples/**/*"
+  ],
+
+  "exclude": ["dist", "node_modules"]
+}
