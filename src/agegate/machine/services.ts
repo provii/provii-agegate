@@ -15,7 +15,6 @@ import { AgeGateError } from "../../errors/AgeGateError.js";
 import type { GateContext } from "../AgeGateMachine.js";
 import type {
   CreateChallengeResponse,
-  StatusResponse,
   QRPayload,
 } from "../../api/v1.js";
 import { machineCtx } from "./context.js";
