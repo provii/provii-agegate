@@ -80,10 +80,11 @@
     "eslint-plugin-sonarjs": {
       "minimatch": "10.2.4"
     },
-    "fast-uri": "3.1.2"
+    "fast-uri": "3.1.2",
+    "tar": "^7.5.16"
   },
   "devDependencies": {
-    "@cyclonedx/cyclonedx-npm": "4.2.1",
+    "@cyclonedx/cyclonedx-npm": "5.0.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
     "@stryker-mutator/core": "^9.6.1",
