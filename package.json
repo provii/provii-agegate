@@ -1,6 +1,6 @@
 {
   "name": "provii-agegate",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "author": "Tom Maelstrom <tom@maelstrom.au>",
   "description": "Zero-Knowledge Age-Verification browser library",

@@ -109,7 +109,7 @@ Pass these to `new AgeGate(options)` or `new AgeGateConfig(options)`:
 | `pollUrl` | `string` | none | Status polling endpoint for RP proxy mode |
 | `cspNonce` | `string` | none | Base64 nonce for injected style elements |
 | `allowedDomains` | `string[]` | `["hosted.provii.app", "sandbox-hosted.provii.app"]` | SSRF domain allowlist for API URLs |
-| `verifyingKeyId` | `0`-`9999999999` | `2031517468` | ZK circuit verifying key ID |
+| `verifyingKeyId` | `0`-`9999999999` | `914153247` | ZK circuit verifying key ID |
 
 ## Framework examples
 

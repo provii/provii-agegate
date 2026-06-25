@@ -142,7 +142,7 @@ const MIN_POLL_INTERVAL = 500;
 const MAX_POLL_INTERVAL = 60000;
 const MIN_VERIFYING_KEY_ID = 0;
 const MAX_VERIFYING_KEY_ID = 9999999999;
-const DEFAULT_VERIFYING_KEY_ID = 2031517468;
+const DEFAULT_VERIFYING_KEY_ID = 914153247;
 
 /* ─────────── types ─────────── */
 
@@ -217,7 +217,7 @@ export interface AgeGateOptions {
    * Verifying key ID for the ZK circuit.
    * @minimum 0
    * @maximum 9999999999
-   * @default 2031517468
+   * @default 914153247
    */
   verifyingKeyId?: number;
 

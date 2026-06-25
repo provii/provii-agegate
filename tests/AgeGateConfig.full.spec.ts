@@ -493,9 +493,9 @@ describe("AgeGateConfig - Full Validation", () => {
       mountElementId: "mount",
     };
 
-    it("uses default verifyingKeyId of 2031517468", () => {
+    it("uses default verifyingKeyId of 914153247", () => {
       const config = new AgeGateConfig(baseConfig);
-      expect(config.verifyingKeyId).toBe(2031517468);
+      expect(config.verifyingKeyId).toBe(914153247);
     });
 
     it("uses default pollInterval of 3000ms", () => {

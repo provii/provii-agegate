@@ -231,7 +231,7 @@ describe("Null and Undefined Handling", () => {
 
   it("handles undefined verifyingKeyId by using default", () => {
     const cfg = new AgeGateConfig({ ...validBase, verifyingKeyId: undefined });
-    expect(cfg.verifyingKeyId).toBe(2031517468); // Default value
+    expect(cfg.verifyingKeyId).toBe(914153247); // Default value
   });
 });
 
