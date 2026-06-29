@@ -102,7 +102,7 @@ jobs:
           exit-code: '1'
           limit-severities-for-sarif: 'true'
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         if: always()
         with: { sarif_file: trivy-results.sarif }
 
@@ -147,7 +147,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with: { persist-credentials: false }
       - name: Run Zizmor
-        uses: zizmorcore/zizmor-action@5f14fd08f7cf1cb1609c1e344975f152c7ee938d # v0.5.6
+        uses: zizmorcore/zizmor-action@192e21d79ab29983730a13d1382995c2307fbcaa # v0.5.7
         env:
           GH_TOKEN: ${{ github.token }}
         with:
@@ -178,7 +178,7 @@ jobs:
         run: semgrep --config p/javascript --config p/typescript --config p/security-audit --config p/secrets --sarif --output semgrep-results.sarif . || true
       - name: Upload Semgrep SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         with: { sarif_file: semgrep-results.sarif, category: semgrep }
 
   # === Aggregate report + hard gate ===
